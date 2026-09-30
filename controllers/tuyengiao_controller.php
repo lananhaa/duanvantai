@@ -1,0 +1,85 @@
+<?php
+require_once 'models/tuyengiao_model.php';
+
+class RouteController {
+    public function index() {
+        $role = (int)($_SESSION['role_id'] ?? 0);
+        if (!in_array($role, [2, 4], true)) {
+            echo '<div style="padding:40px;text-align:center;color:#991b1b;"><h2>⛔ Từ chối truy cập</h2><p>Bạn không có quyền quản lý tuyến giao.</p><a href="index.php?page=trangchu">← Quay lại</a></div>';
+            exit;
+        }
+
+        $model = new RouteModel();
+        $message = '';
+        $messageType = 'success';
+        $tab = $_GET['tab'] ?? 'tuyengiao'; // 'tuyengiao' | 'fees'
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $type = $_POST['form_type'] ?? 'route';
+            $id = (int)($_POST['id'] ?? 0);
+
+            if ($type === 'route') {
+                $data = [
+                    'ten'         => trim($_POST['ten'] ?? ''),
+                    'khu_vuc_di'  => trim($_POST['khu_vuc_di'] ?? ''),
+                    'khu_vuc_den' => trim($_POST['khu_vuc_den'] ?? ''),
+                    'mo_ta'       => trim($_POST['mo_ta'] ?? ''),
+                ];
+                if ($data['ten'] === '' || $data['khu_vuc_di'] === '' || $data['khu_vuc_den'] === '') {
+                    $message = 'Vui lòng nhập tên tuyến, khu vực đi và khu vực đến.';
+                    $messageType = 'error';
+                } else {
+                    $result = $id > 0 ? $model->update($id, $data) : $model->create($data);
+                    $message = $result['message'];
+                    $messageType = $result['success'] ? 'success' : 'error';
+                }
+                if ($messageType === 'success') { header('Location: index.php?page=tuyengiao&tab=routes'); exit; }
+
+            } elseif ($type === 'fee') {
+                $data = [
+                    'ten'         => trim($_POST['ten'] ?? ''),
+                    'khu_vuc_di'  => trim($_POST['khu_vuc_di'] ?? ''),
+                    'khu_vuc_den' => trim($_POST['khu_vuc_den'] ?? ''),
+                    'kl_tu'       => (float)($_POST['kl_tu'] ?? 0),
+                    'kl_den'      => (float)($_POST['kl_den'] ?? 0),
+                    'phi_co_ban'  => (float)($_POST['phi_co_ban'] ?? 0),
+                    'phi_vuot'    => (float)($_POST['phi_vuot'] ?? 0),
+                    'status'      => trim($_POST['status'] ?? 'Dang ap dung'),
+                ];
+                if ($data['ten'] === '' || $data['khu_vuc_di'] === '' || $data['khu_vuc_den'] === '' || $data['phi_co_ban'] <= 0) {
+                    $message = 'Vui lòng nhập đầy đủ thông tin mức phí.';
+                    $messageType = 'error';
+                } else {
+                    $result = $id > 0 ? $model->updateFee($id, $data) : $model->createFee($data);
+                    $message = $result['message'];
+                    $messageType = $result['success'] ? 'success' : 'error';
+                }
+                if ($messageType === 'success') { header('Location: index.php?page=tuyengiao&tab=fees'); exit; }
+                $tab = 'fees';
+            }
+        }
+
+        if (isset($_GET['action'], $_GET['id'])) {
+            $id = (int)$_GET['id'];
+            if ($_GET['action'] === 'delete_route') {
+                $result = $model->delete($id);
+                $tab = 'tuyengiao';
+            } elseif ($_GET['action'] === 'delete_fee') {
+                $result = $model->deleteFee($id);
+                $tab = 'fees';
+            }
+            if (isset($result)) {
+                $message = $result['message'];
+                $messageType = $result['success'] ? 'success' : 'error';
+            }
+        }
+
+        $keyword = trim($_GET['keyword'] ?? '');
+        $status  = trim($_GET['status'] ?? '');
+        $routes  = $model->getAll($keyword);
+        $fees    = $model->getAllFees($keyword, $status);
+
+        require_once 'views/tuyengiao.php';
+    }
+}
+?>

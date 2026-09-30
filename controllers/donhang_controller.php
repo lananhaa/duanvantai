@@ -1,5 +1,5 @@
 <?php
-require_once 'models/OrderModel.php';
+require_once 'models/donhang_model.php';
 
 class OrderController {
     public function index() {
@@ -54,8 +54,10 @@ class OrderController {
                 'delivery_ward' => trim($_POST['delivery_ward'] ?? ''),
                 'products' => $_POST['products'] ?? [],
                 'return_fee' => $_POST['return_fee'] ?? 0,
+                'cod_amount' => $_POST['cod_amount'] ?? 0,
                 'status' => $_POST['status'] ?? 'Cho xac nhan',
-                'cancel_reason' => trim($_POST['cancel_reason'] ?? '')
+                'cancel_reason' => trim($_POST['cancel_reason'] ?? ''),
+                'account_id' => $_SESSION['user_id'] ?? 0
             ];
             $id = (int) ($_POST['id'] ?? 0);
             if ($customerId !== null) {
@@ -105,7 +107,11 @@ class OrderController {
             if ($customerId !== null && (!$existingOrder || (int) $existingOrder['MaKhachHang'] !== (int) $customerId)) {
                 $result = ['success' => false, 'message' => 'Bạn không có quyền thao tác trên đơn hàng này.'];
             } elseif ($_GET['action'] === 'cancel') {
-                $result = $orderModel->cancel($id, trim($_GET['reason'] ?? 'Hủy bởi nhân viên.'));
+                $result = $orderModel->cancel($id, trim($_GET['reason'] ?? ''), $_SESSION['user_id'] ?? 0);
+            } elseif ($_GET['action'] === 'receive' && in_array($role, [2, 4], true)) {
+                $result = $orderModel->receive($id, $_SESSION['user_id'] ?? 0);
+            } elseif ($_GET['action'] === 'queue' && in_array($role, [2, 4], true)) {
+                $result = $orderModel->queueForAssign($id, $_SESSION['user_id'] ?? 0);
             } elseif ($_GET['action'] === 'delete' && $role !== 1) {
                 $result = $orderModel->delete($id);
             } elseif ($_GET['action'] === 'delete') {
@@ -118,7 +124,7 @@ class OrderController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $messageType === 'success') {
-            header('Location: index.php?page=orders');
+            header('Location: index.php?page=donhang');
             exit;
         }
 
@@ -137,7 +143,7 @@ class OrderController {
             }
         }
 
-        require_once 'views/order.php';
+        require_once 'views/donhang.php';
     }
 }
 ?>

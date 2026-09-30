@@ -114,13 +114,13 @@
     </style>
 </head>
 <body class="dashboard-body">
-    <?php include 'views/sidebar.php'; ?>
+    <?php include 'views/menu.php'; ?>
 
     <main class="main-content">
         <header class="topbar">
             <div class="search-bar">
                 <form action="index.php" method="GET" style="display:flex;width:100%">
-                    <input type="hidden" name="page" value="assign">
+                    <input type="hidden" name="page" value="phancong">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" name="keyword"
                            placeholder="Tìm đơn hàng theo mã, KH, người nhận..."
@@ -162,11 +162,11 @@
 
                         <div class="filter-row">
                             <form action="index.php" method="GET" style="display:flex;gap:8px;width:100%;flex-wrap:wrap">
-                                <input type="hidden" name="page" value="assign">
+                                <input type="hidden" name="page" value="phancong">
                                 <input type="text" name="keyword" placeholder="Tìm đơn..." value="<?php echo htmlspecialchars($keyword); ?>" style="flex:1;min-width:140px">
                                 <button class="btn btn-primary btn-sm" type="submit"><i class="fas fa-search"></i></button>
                                 <?php if ($keyword): ?>
-                                <a href="index.php?page=assign" class="btn btn-outline btn-sm">Xóa lọc</a>
+                                <a href="index.php?page=phancong" class="btn btn-outline btn-sm">Xóa lọc</a>
                                 <?php endif; ?>
                             </form>
                         </div>
@@ -215,7 +215,7 @@
                                             <td><span class="status-badge <?php echo $sClass; ?>"><?php echo htmlspecialchars($o['TrangThai']); ?></span></td>
                                             <td class="text-center">
                                                 <?php if ($o['TaiXeDaPhanCong']): ?>
-                                                <a href="index.php?page=assign&action=cancel_assign&id=<?php echo $o['MaDonHang']; ?>"
+                                                <a href="index.php?page=phancong&action=cancel_assign&id=<?php echo $o['MaDonHang']; ?>"
                                                    class="btn-icon" style="color:#f59e0b"
                                                    title="Hủy phân công"
                                                    onclick="return confirm('Hủy phân công đơn #<?php echo $o['MaDonHang']; ?>?')">
@@ -240,7 +240,7 @@
 
                         <div class="filter-row">
                             <form action="index.php" method="GET" style="display:flex;gap:8px;width:100%;flex-wrap:wrap">
-                                <input type="hidden" name="page" value="assign">
+                                <input type="hidden" name="page" value="phancong">
                                 <?php if ($keyword): ?><input type="hidden" name="keyword" value="<?php echo htmlspecialchars($keyword); ?>"><?php endif; ?>
                                 <input type="text" name="driver_kw" placeholder="Tên, SĐT, khu vực..." value="<?php echo htmlspecialchars($driverKeyword); ?>" style="flex:1;min-width:140px">
                                 <select name="driver_status" onchange="this.form.submit()" style="min-width:140px">
@@ -319,8 +319,8 @@
                                 <i class="fas fa-mouse-pointer"></i> Nhấp vào thẻ tài xế để chọn
                             </div>
 
-                            <form method="POST" action="index.php?page=assign" id="assignForm">
-                                <input type="hidden" name="action" value="assign">
+                            <form method="POST" action="index.php?page=phancong" id="assignForm">
+                                <input type="hidden" name="action" value="phancong">
                                 <input type="hidden" name="don_hang_id" id="hiddenOrderId" value="">
                                 <input type="hidden" name="tai_xe_id"   id="hiddenDriverId" value="">
 

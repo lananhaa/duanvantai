@@ -47,7 +47,7 @@
                 </div>
                 <?php endif; ?>
 
-                <form id="loginForm" method="POST" action="index.php?page=login">
+                <form id="loginForm" method="POST" action="index.php?page=dangnhap">
                     <div class="input-group">
                         <label for="username">Tên đăng nhập / Email</label>
                         <div class="input-wrapper">

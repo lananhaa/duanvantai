@@ -1,5 +1,5 @@
 <?php
-require_once 'models/CustomerModel.php';
+require_once 'models/khachhang_model.php';
 
 class CustomerController {
     public function index() {
@@ -43,7 +43,7 @@ class CustomerController {
         }
 
         if ($message !== '' && $_SERVER['REQUEST_METHOD'] === 'POST' && $messageType === 'success') {
-            header('Location: index.php?page=customers');
+            header('Location: index.php?page=khachhang');
             exit;
         }
 
@@ -53,7 +53,7 @@ class CustomerController {
         $stmt = $customerModel->getAll($keyword);
         $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        require_once 'views/customer.php';
+        require_once 'views/khachhang.php';
     }
 }
 ?>

@@ -1,4 +1,4 @@
-    <?php $activePage = $_GET['page'] ?? 'dashboard'; $sidebarRole = (int) ($_SESSION['role_id'] ?? 0); ?>
+    <?php $activePage = $_GET['page'] ?? 'trangchu'; $sidebarRole = (int) ($_SESSION['role_id'] ?? 0); ?>
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo-container">
@@ -15,7 +15,7 @@
         <div class="sidebar-menu-container">
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="index.php?page=dashboard" class="nav-link <?php echo $activePage === 'dashboard' ? 'active' : ''; ?>">
+                    <a href="index.php?page=trangchu" class="nav-link <?php echo $activePage === 'trangchu' ? 'active' : ''; ?>">
                         <i class="fas fa-home"></i>
                         <span class="nav-text">Trang chủ</span>
                     </a>
@@ -24,65 +24,59 @@
                 <li class="nav-title">Nghiệp vụ Đơn hàng</li>
                 <?php if ($sidebarRole !== 3): ?>
                 <li class="nav-item">
-                    <a href="index.php?page=orders" class="nav-link <?php echo $activePage === 'orders' ? 'active' : ''; ?>">
+                    <a href="index.php?page=donhang" class="nav-link <?php echo $activePage === 'donhang' ? 'active' : ''; ?>">
                         <i class="fas fa-box-open"></i>
                         <span class="nav-text">Quản lý đơn hàng</span>
                     </a>
                 </li>
                 <?php endif; ?>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="index.php?page=diadiem" class="nav-link <?php echo $activePage === 'diadiem' ? 'active' : ''; ?>">
                         <i class="fas fa-map-marker-alt"></i>
                         <span class="nav-text">Quản lý điểm nhận/giao</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="index.php?page=tracking" class="nav-link <?php echo in_array($activePage, ['tracking', 'driver-orders'], true) ? 'active' : ''; ?>">
+                    <a href="index.php?page=donhangtaixe" class="nav-link <?php echo in_array($activePage, ['donhangtaixe', 'donhangtaixe'], true) ? 'active' : ''; ?>">
                         <i class="fas fa-clipboard-check"></i>
-                        <span class="nav-text">Theo dõi trạng thái</span>
+                        <span class="nav-text">Đơn hàng phân công cho tài xế</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="index.php?page=donhang" class="nav-link">
                         <i class="fas fa-search"></i>
                         <span class="nav-text">Tra cứu đơn hàng</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="index.php?page=thuho" class="nav-link <?php echo $activePage === 'thuho' ? 'active' : ''; ?>">
                         <i class="fas fa-money-bill-wave"></i>
                         <span class="nav-text">Quản lý COD</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-calculator"></i>
-                        <span class="nav-text">Tính phí vận chuyển</span>
                     </a>
                 </li>
 
                 <li class="nav-title">Nghiệp vụ Vận tải</li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="index.php?page=taixe" class="nav-link <?php echo $activePage === 'taixe' ? 'active' : ''; ?>">
                         <i class="fas fa-id-card"></i>
                         <span class="nav-text">Quản lý tài xế</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="index.php?page=phuongtien" class="nav-link <?php echo $activePage === 'phuongtien' ? 'active' : ''; ?>">
                         <i class="fas fa-truck"></i>
                         <span class="nav-text">Quản lý phương tiện</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="index.php?page=assign" class="nav-link <?php echo $activePage === 'assign' ? 'active' : ''; ?>">
+                    <a href="index.php?page=phancong" class="nav-link <?php echo $activePage === 'phancong' ? 'active' : ''; ?>">
                         <i class="fas fa-user-check"></i>
                         <span class="nav-text">Phân công tài xế</span>
                     </a>
                 </li>
                 
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="index.php?page=tuyengiao" class="nav-link <?php echo $activePage === 'tuyengiao' ? 'active' : ''; ?>">
                         <i class="fas fa-route"></i>
                         <span class="nav-text">Quản lý tuyến giao</span>
                     </a>
@@ -90,25 +84,19 @@
 
                 <li class="nav-title">Khách hàng & Báo cáo</li>
                 <li class="nav-item">
-                    <a href="index.php?page=customers" class="nav-link <?php echo $activePage === 'customers' ? 'active' : ''; ?>">
+                    <a href="index.php?page=khachhang" class="nav-link <?php echo $activePage === 'khachhang' ? 'active' : ''; ?>">
                         <i class="fas fa-users"></i>
                         <span class="nav-text">Quản lý khách hàng</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="index.php?page=thongke" class="nav-link <?php echo $activePage === 'thongke' ? 'active' : ''; ?>">
                         <i class="fas fa-chart-line"></i>
-                        <span class="nav-text">Thống kê giao hàng</span>
+                        <span class="nav-text">Thống kê & Báo cáo</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-chart-pie"></i>
-                        <span class="nav-text">Thống kê doanh thu</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="index.php?page=permissions" class="nav-link <?php echo $activePage === 'permissions' ? 'active' : ''; ?>">
+                    <a href="index.php?page=phanquyen" class="nav-link <?php echo $activePage === 'phanquyen' ? 'active' : ''; ?>">
                         <i class="fas fa-shield-alt"></i>
                         <span class="nav-text">Phân quyền chức năng</span>
                     </a>

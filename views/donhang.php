@@ -20,12 +20,12 @@ $editDetail = $editOrder['detail'] ?? [];
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="dashboard-body">
-    <?php include 'views/sidebar.php'; ?>
+    <?php include 'views/menu.php'; ?>
     <main class="main-content">
         <header class="topbar">
             <div class="search-bar">
                 <form action="index.php" method="GET" class="order-search-form">
-                    <input type="hidden" name="page" value="orders">
+                    <input type="hidden" name="page" value="donhang">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" name="keyword" placeholder="Tìm mã đơn, khách hàng, người nhận..." value="<?php echo htmlspecialchars($keyword); ?>">
                 </form>
@@ -43,12 +43,12 @@ $editDetail = $editOrder['detail'] ?? [];
             <?php if ($message !== ''): ?><div class="alert-message <?php echo $messageType; ?>"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
             <div class="card order-filter-card">
                 <form action="index.php" method="GET" class="order-filter-form">
-                    <input type="hidden" name="page" value="orders">
+                    <input type="hidden" name="page" value="donhang">
                     <input type="hidden" name="keyword" value="<?php echo htmlspecialchars($keyword); ?>">
                     <label>Trạng thái
                         <select name="status" onchange="this.form.submit()"><option value="">Tất cả trạng thái</option><?php foreach ($statuses as $item): ?><option value="<?php echo htmlspecialchars($item); ?>" <?php echo $status === $item ? 'selected' : ''; ?>><?php echo htmlspecialchars($item); ?></option><?php endforeach; ?></select>
                     </label>
-                    <a class="btn btn-outline" href="index.php?page=orders"><i class="fas fa-rotate-left"></i> Xóa lọc</a>
+                    <a class="btn btn-outline" href="index.php?page=donhang"><i class="fas fa-rotate-left"></i> Xóa lọc</a>
                 </form>
             </div>
             <div class="card"><div class="card-body p-0"><div class="table-responsive">
@@ -65,10 +65,10 @@ $editDetail = $editOrder['detail'] ?? [];
                         <td class="font-medium text-success"><?php echo number_format((float) $row['TongPhi'], 0, ',', '.'); ?>đ</td>
                         <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($rowStatus); ?></span></td>
                         <td class="text-center order-actions">
-                            <a class="btn-icon text-primary" title="Xem chi tiết" href="index.php?page=orders&view=<?php echo $row['MaDonHang']; ?>"><i class="fas fa-eye"></i></a>
-                            <a class="btn-icon text-warning" title="Sửa đơn hàng" href="index.php?page=orders&edit=<?php echo $row['MaDonHang']; ?>"><i class="fas fa-edit"></i></a>
-                            <?php if (in_array($rowStatus, ['Cho phan cong'], true)): ?><a class="btn-icon text-danger" title="Hủy đơn hàng" href="index.php?page=orders&action=cancel&id=<?php echo $row['MaDonHang']; ?>" onclick="const reason = prompt('Nhập lý do hủy đơn:'); if (!reason) return false; this.href += '&reason=' + encodeURIComponent(reason); return confirm('Xác nhận hủy đơn hàng này?');"><i class="fas fa-ban"></i></a><?php endif; ?>
-                            <?php if (($role ?? 0) !== 1): ?><a class="btn-icon text-danger" title="Xóa đơn hàng" href="index.php?page=orders&action=delete&id=<?php echo $row['MaDonHang']; ?>" onclick="return confirm('Xóa đơn hàng này? Dữ liệu chi tiết liên quan cũng sẽ bị xóa.');"><i class="fas fa-trash"></i></a><?php endif; ?>
+                            <a class="btn-icon text-primary" title="Xem chi tiết" href="index.php?page=donhang&view=<?php echo $row['MaDonHang']; ?>"><i class="fas fa-eye"></i></a>
+                            <a class="btn-icon text-warning" title="Sửa đơn hàng" href="index.php?page=donhang&edit=<?php echo $row['MaDonHang']; ?>"><i class="fas fa-edit"></i></a>
+                            <?php if (in_array($rowStatus, ['Cho xac nhan', 'Da xac nhan', 'Cho phan cong'], true)): ?><a class="btn-icon text-danger" title="Hủy đơn hàng" href="index.php?page=donhang&action=cancel&id=<?php echo $row['MaDonHang']; ?>" onclick="const reason = prompt('Nhập lý do hủy đơn:'); if (!reason) return false; this.href += '&reason=' + encodeURIComponent(reason); return confirm('Xác nhận hủy đơn hàng này?');"><i class="fas fa-ban"></i></a><?php endif; ?>
+                            <?php if (($role ?? 0) !== 1): ?><a class="btn-icon text-danger" title="Xóa đơn hàng" href="index.php?page=donhang&action=delete&id=<?php echo $row['MaDonHang']; ?>" onclick="return confirm('Xóa đơn hàng này? Dữ liệu chi tiết liên quan cũng sẽ bị xóa.');"><i class="fas fa-trash"></i></a><?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; endif; ?>
@@ -80,10 +80,57 @@ $editDetail = $editOrder['detail'] ?? [];
         <div class="customer-modal-backdrop" data-close-order-modal></div>
         <section class="customer-modal-dialog order-dialog" role="dialog" aria-modal="true">
             <?php $isReadOnly = (bool) $viewOrder; $formOrder = $editOrder ?: $viewOrder; $formDetail = $formOrder['detail'] ?? []; ?>
-            <div class="customer-modal-header"><div><h2><?php echo $isReadOnly ? 'Chi tiết đơn hàng' : ($editOrder ? 'Sửa đơn hàng' : 'Tạo đơn hàng'); ?></h2><p>Thông tin nhận hàng, giao hàng và hàng hóa</p></div><a class="modal-close" href="index.php?page=orders" aria-label="Đóng"><i class="fas fa-times"></i></a></div>
+            <div class="customer-modal-header"><div><h2><?php echo $isReadOnly ? 'Chi tiết đơn hàng' : ($editOrder ? 'Sửa đơn hàng' : 'Tạo đơn hàng'); ?></h2><p>Thông tin nhận hàng, giao hàng và hàng hóa</p></div><a class="modal-close" href="index.php?page=donhang" aria-label="Đóng"><i class="fas fa-times"></i></a></div>
             <?php if ($isReadOnly && $formOrder): ?>
-                <div class="order-detail-grid"><div><strong>Mã đơn:</strong> #<?php echo $formOrder['MaDonHang']; ?></div><div><strong>Trạng thái:</strong> <?php echo htmlspecialchars($formOrder['TrangThai']); ?></div><div><strong>Khách hàng:</strong> <?php echo htmlspecialchars($formOrder['TenKhachHang']); ?></div><div><strong>Người nhận:</strong> <?php echo htmlspecialchars($formOrder['TenNguoiNhan'] . ' - ' . $formOrder['SDTNhan']); ?></div><div><strong>Điểm nhận:</strong> <?php echo htmlspecialchars($formOrder['DiaChiNhan']); ?></div><div><strong>Tuyến:</strong> <?php echo htmlspecialchars($formOrder['TenTuyen'] ?? ''); ?></div><div><strong>Hàng hóa:</strong> <?php echo htmlspecialchars($formDetail['TenHangHoa'] ?? ''); ?></div><div><strong>Số lượng:</strong> <?php echo (int) ($formDetail['SoLuong'] ?? 0); ?></div><div><strong>Khối lượng:</strong> <?php echo number_format((float) $formOrder['TongKhoiLuong'], 1, ',', '.'); ?> kg</div><div><strong>Tổng phí:</strong> <?php echo number_format((float) $formOrder['TongPhi'], 0, ',', '.'); ?>đ</div></div>
-                <div class="customer-modal-footer"><a class="btn btn-outline" href="index.php?page=orders">Đóng</a></div>
+                <div class="order-detail-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+                    <div style="grid-column: 1 / -1; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; color: #ee4d2d;">Thông tin chung</div>
+                    <div><strong>Mã đơn:</strong> #<?php echo $formOrder['MaDonHang']; ?></div>
+                    <div><strong>Ngày tạo:</strong> <?php echo date('d/m/Y H:i', strtotime($formOrder['NgayTao'])); ?></div>
+                    <div><strong>Trạng thái:</strong> <span class="status-badge <?php echo $statusClasses[$formOrder['TrangThai']] ?? 'status-cho-xu-ly'; ?>"><?php echo htmlspecialchars($formOrder['TrangThai']); ?></span></div>
+                    <div><strong>Tài xế phân công:</strong> <span style="font-weight: 500; color: #28a745;"><?php echo htmlspecialchars($formOrder['TenTaiXe'] ?? 'Chưa phân công'); ?></span></div>
+                    <?php if ($formOrder['LyDoHuy']): ?>
+                    <div style="grid-column: 1 / -1;"><strong>Lý do hủy:</strong> <span style="color: #dc3545;"><?php echo htmlspecialchars($formOrder['LyDoHuy']); ?></span></div>
+                    <?php endif; ?>
+                    
+                    <div style="grid-column: 1 / -1; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; margin-top: 10px; color: #ee4d2d;">Thông tin khách hàng & Giao nhận</div>
+                    <div><strong>Khách hàng:</strong> <?php echo htmlspecialchars($formOrder['TenKhachHang']); ?></div>
+                    <div><strong>Tuyến giao:</strong> <?php echo htmlspecialchars($formOrder['TenTuyen'] ?? ''); ?></div>
+                    <div style="grid-column: 1 / -1; background: #f9f9f9; padding: 10px; border-radius: 4px;">
+                        <strong><i class="fas fa-map-marker-alt" style="color: #007bff;"></i> Nhận hàng:</strong>
+                        <br>SĐT: <?php echo htmlspecialchars($formOrder['SDTGoi'] ?? ''); ?>
+                        <br>Địa chỉ: <?php echo htmlspecialchars($formOrder['DiaChiNhan'] . ', ' . $formOrder['PhuongXaNhan'] . ', ' . $formOrder['QuanHuyenNhan'] . ', ' . $formOrder['TinhThanhNhan']); ?>
+                    </div>
+                    <div style="grid-column: 1 / -1; background: #f9f9f9; padding: 10px; border-radius: 4px;">
+                        <strong><i class="fas fa-map-marker-alt" style="color: #28a745;"></i> Giao hàng:</strong>
+                        <br>Người nhận: <?php echo htmlspecialchars($formOrder['TenNguoiNhan'] . ' - ' . $formOrder['SDTNhan']); ?>
+                        <br>Địa chỉ: <?php echo htmlspecialchars($formOrder['DiaChiGiao'] . ', ' . $formOrder['PhuongXaGiao'] . ', ' . $formOrder['QuanHuyenGiao'] . ', ' . $formOrder['TinhThanhGiao']); ?>
+                    </div>
+
+                    <div style="grid-column: 1 / -1; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 10px; margin-top: 10px; color: #ee4d2d;">Thông tin hàng hóa & Cước phí</div>
+                    <div style="grid-column: 1 / -1;">
+                        <table class="table" style="margin-bottom: 0;">
+                            <thead style="background: #f1f1f1;"><tr><th>Hàng hóa</th><th>SL</th><th>KL (kg)</th><th>Thành tiền</th></tr></thead>
+                            <tbody>
+                            <?php foreach ($formOrder['detail'] as $item): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($item['TenHangHoa']); ?></td>
+                                    <td><?php echo (int) $item['SoLuong']; ?></td>
+                                    <td><?php echo number_format((float) $item['KhoiLuong'], 1, ',', '.'); ?></td>
+                                    <td><?php echo number_format((float) $item['ThanhTien'], 0, ',', '.'); ?>đ</td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div><strong>Tổng khối lượng:</strong> <?php echo number_format((float) $formOrder['TongKhoiLuong'], 1, ',', '.'); ?> kg</div>
+                    <div><strong>Tiền hàng:</strong> <?php echo number_format((float) $formOrder['TienHang'], 0, ',', '.'); ?>đ</div>
+                    <div><strong>Phí vận chuyển:</strong> <?php echo number_format((float) $formOrder['PhiVanChuyen'], 0, ',', '.'); ?>đ</div>
+                    <?php if ((float)$formOrder['PhiHoan'] > 0): ?>
+                    <div><strong>Phí hoàn:</strong> <?php echo number_format((float) $formOrder['PhiHoan'], 0, ',', '.'); ?>đ</div>
+                    <?php endif; ?>
+                    <div style="grid-column: 1 / -1; text-align: right; font-size: 16px;"><strong>Tổng phí:</strong> <span style="color: #ee4d2d; font-weight: bold; font-size: 18px;"><?php echo number_format((float) $formOrder['TongPhi'], 0, ',', '.'); ?>đ</span></div>
+                </div>
+                <div class="customer-modal-footer"><a class="btn btn-outline" href="index.php?page=donhang">Đóng</a></div>
             <?php else: ?>
                 <style>
                 .spx-form-container { background: #f5f5f5; padding: 15px; display: flex; flex-direction: column; gap: 15px; border-radius: 4px; }
@@ -100,7 +147,7 @@ $editDetail = $editOrder['detail'] ?? [];
                 .btn-submit-spx { background: #ee4d2d; color: #fff; border: none; box-shadow: none; }
                 .btn-submit-spx:hover { background: #d73a1e; transform: none; }
                 </style>
-                <form method="POST" action="index.php?page=orders" id="orderForm"><input type="hidden" name="id" value="<?php echo htmlspecialchars($editOrder['MaDonHang'] ?? ''); ?>">
+                <form method="POST" action="index.php?page=donhang" id="orderForm"><input type="hidden" name="id" value="<?php echo htmlspecialchars($editOrder['MaDonHang'] ?? ''); ?>">
                     <div class="spx-form-container">
                         <div class="spx-section">
                             <div class="spx-section-header">1. Đại chỉ người gửi</div>
@@ -129,14 +176,14 @@ $editDetail = $editOrder['detail'] ?? [];
                             <div class="spx-section" style="margin: 0; border: 1px solid #e5e5e5;">
                                 <div class="spx-section-header" style="border-bottom: 1px solid #e5e5e5;">3. Loại dịch vụ</div>
                                 <div class="spx-section-body full">
-                                    <div class="spx-input-group"><label><span>*</span>Tuyến giao</label><select name="route_id" id="routeSelect" required><option value="">-- Chọn tuyến giao --</option><?php foreach ($options['routes'] as $item): ?><option value="<?php echo $item['MaTuyenGiao']; ?>" <?php echo (($editOrder['MaTuyenGiao'] ?? '') == $item['MaTuyenGiao']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($item['TenTuyen']); ?></option><?php endforeach; ?></select></div>
+                                    <div class="spx-input-group"><label><span>*</span>Tuyến giao</label><select name="route_id" id="routeSelect" required><option value="">-- Chọn tuyến giao --</option><?php foreach ($options['tuyengiao'] as $item): ?><option value="<?php echo $item['MaTuyenGiao']; ?>" <?php echo (($editOrder['MaTuyenGiao'] ?? '') == $item['MaTuyenGiao']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($item['TenTuyen']); ?></option><?php endforeach; ?></select></div>
                                     <div id="routeMessage" style="font-size: 13px; margin-top: -5px;"></div>
                                 </div>
                             </div>
                             <div class="spx-section" style="margin: 0; border: 1px solid #e5e5e5;">
                                 <div class="spx-section-header" style="border-bottom: 1px solid #e5e5e5;">4. Thông tin chung</div>
                                 <div class="spx-section-body full">
-                                    <div class="spx-input-group"><label><span>*</span>Khách hàng</label><select name="customer_id" required><?php foreach ($options['customers'] as $item): ?><option value="<?php echo $item['MaKhachHang']; ?>" <?php echo (($editOrder['MaKhachHang'] ?? '') == $item['MaKhachHang']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($item['HoTen']); ?></option><?php endforeach; ?></select></div>
+                                    <div class="spx-input-group"><label><span>*</span>Khách hàng</label><select name="customer_id" required><?php foreach ($options['khachhang'] as $item): ?><option value="<?php echo $item['MaKhachHang']; ?>" <?php echo (($editOrder['MaKhachHang'] ?? '') == $item['MaKhachHang']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($item['HoTen']); ?></option><?php endforeach; ?></select></div>
                                 </div>
                             </div>
                         </div>
@@ -170,7 +217,7 @@ $editDetail = $editOrder['detail'] ?? [];
                             </div>
                         </div>
                     </div>
-                    <div class="customer-modal-footer"><a class="btn btn-outline" href="index.php?page=orders">Hủy</a><button class="btn btn-primary btn-submit-spx" type="submit"><i class="fas fa-save"></i> Lưu đơn hàng</button></div>
+                    <div class="customer-modal-footer"><a class="btn btn-outline" href="index.php?page=donhang">Hủy</a><button class="btn btn-primary btn-submit-spx" type="submit"><i class="fas fa-save"></i> Lưu đơn hàng</button></div>
                 </form>
             <?php endif; ?>
         </section>
@@ -222,7 +269,7 @@ $editDetail = $editOrder['detail'] ?? [];
                 totalWeight += w * q;
             });
             
-            fetch(`index.php?page=orders&action=calc_fee&route_id=${routeId}&weight=${totalWeight}`)
+            fetch(`index.php?page=donhang&action=calc_fee&route_id=${routeId}&weight=${totalWeight}`)
             .then(res => res.json())
             .then(data => {
                 const feeDisplay = document.getElementById('calcFeeDisplay');
@@ -331,7 +378,7 @@ $editDetail = $editOrder['detail'] ?? [];
                     totalWeight += w * q;
                 });
 
-                fetch(`index.php?page=orders&action=find_route&pickup=${encodeURIComponent(pickup)}&delivery=${encodeURIComponent(delivery)}&weight=${totalWeight}`)
+                fetch(`index.php?page=donhang&action=find_route&pickup=${encodeURIComponent(pickup)}&delivery=${encodeURIComponent(delivery)}&weight=${totalWeight}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.route_id) {

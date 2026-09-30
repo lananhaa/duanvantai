@@ -10,7 +10,7 @@
 </head>
 <body class="dashboard-body">
     <!-- Sidebar -->
-    <?php include 'views/sidebar.php'; ?>
+    <?php include 'views/menu.php'; ?>
 
     <!-- Main Content -->
     <main class="main-content">

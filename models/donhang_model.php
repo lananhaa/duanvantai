@@ -48,12 +48,14 @@ class OrderModel {
                          dg.SoDienThoai AS SDTNhan, dn.DiaChi AS DiaChiNhan,
                          dg.DiaChi AS DiaChiGiao, dg.TinhThanh AS TinhThanhGiao, dg.QuanHuyen AS QuanHuyenGiao, dg.PhuongXa AS PhuongXaGiao,
                          dn.SoDienThoai AS SDTGoi, dn.TinhThanh AS TinhThanhNhan, dn.QuanHuyen AS QuanHuyenNhan, dn.PhuongXa AS PhuongXaNhan,
-                         tn.TenTuyen
+                         tn.TenTuyen, tx.HoTen AS TenTaiXe
                   FROM {$this->table_name} d
                   LEFT JOIN KhachHang k ON d.MaKhachHang = k.MaKhachHang
                   LEFT JOIN DiemGiao dg ON d.MaDiemGiao = dg.MaDiemGiao
                   LEFT JOIN DiemNhan dn ON d.MaDiemNhan = dn.MaDiemNhan
                   LEFT JOIN TuyenGiao tn ON d.MaTuyenGiao = tn.MaTuyenGiao
+                  LEFT JOIN PhanCong pc ON pc.MaDonHang = d.MaDonHang AND pc.TrangThai NOT IN ('Da huy')
+                  LEFT JOIN TaiXe tx ON tx.MaTaiXe = pc.MaTaiXe
                   WHERE d.MaDonHang = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->execute([':id' => (int) $id]);
@@ -87,10 +89,10 @@ class OrderModel {
         $customerStatement = $this->conn->prepare($customerQuery);
         $customerStatement->execute($customerParams);
         return [
-            'customers' => $customerStatement->fetchAll(PDO::FETCH_ASSOC),
+            'khachhang' => $customerStatement->fetchAll(PDO::FETCH_ASSOC),
             'pickups' => $this->conn->query("SELECT MaDiemNhan, DiaChi, KhuVuc FROM DiemNhan ORDER BY MaDiemNhan DESC")->fetchAll(PDO::FETCH_ASSOC),
             'deliveries' => $this->conn->query("SELECT MaDiemGiao, TenNguoiNhan, SoDienThoai, DiaChi, KhuVuc FROM DiemGiao ORDER BY MaDiemGiao DESC")->fetchAll(PDO::FETCH_ASSOC),
-            'routes' => $this->conn->query("SELECT MaTuyenGiao, TenTuyen, KhuVucDi, KhuVucDen FROM TuyenGiao ORDER BY TenTuyen")->fetchAll(PDO::FETCH_ASSOC),
+            'tuyengiao' => $this->conn->query("SELECT MaTuyenGiao, TenTuyen, KhuVucDi, KhuVucDen FROM TuyenGiao ORDER BY TenTuyen")->fetchAll(PDO::FETCH_ASSOC),
             'products' => $this->conn->query("SELECT MaHangHoa, TenHangHoa, KhoiLuong FROM HangHoa WHERE TrangThai = 'Dang su dung' ORDER BY TenHangHoa")->fetchAll(PDO::FETCH_ASSOC)
         ];
     }
@@ -163,12 +165,14 @@ class OrderModel {
         try {
             $this->conn->beginTransaction();
 
-            $stmt = $this->conn->prepare("INSERT INTO DiemNhan (DiaChi, TinhThanh, QuanHuyen, PhuongXa, SoDienThoai) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$data['pickup_address'], $data['pickup_province'], $data['pickup_district'], $data['pickup_ward'], $data['pickup_phone']]);
+            $pickupArea = trim($data['pickup_district'] ?: $data['pickup_province']);
+            $deliveryArea = trim($data['delivery_district'] ?: $data['delivery_province']);
+            $stmt = $this->conn->prepare("INSERT INTO DiemNhan (DiaChi, KhuVuc, TinhThanh, QuanHuyen, PhuongXa, SoDienThoai) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['pickup_address'], $pickupArea, $data['pickup_province'], $data['pickup_district'], $data['pickup_ward'], $data['pickup_phone']]);
             $data['pickup_id'] = $this->conn->lastInsertId();
 
-            $stmt = $this->conn->prepare("INSERT INTO DiemGiao (TenNguoiNhan, SoDienThoai, DiaChi, TinhThanh, QuanHuyen, PhuongXa) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$data['delivery_name'], $data['delivery_phone'], $data['delivery_address'], $data['delivery_province'], $data['delivery_district'], $data['delivery_ward']]);
+            $stmt = $this->conn->prepare("INSERT INTO DiemGiao (TenNguoiNhan, SoDienThoai, DiaChi, KhuVuc, TinhThanh, QuanHuyen, PhuongXa) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['delivery_name'], $data['delivery_phone'], $data['delivery_address'], $deliveryArea, $data['delivery_province'], $data['delivery_district'], $data['delivery_ward']]);
             $data['delivery_id'] = $this->conn->lastInsertId();
 
             $product_ids = [];
@@ -193,9 +197,17 @@ class OrderModel {
                 ':weight' => $calculated['weight'], ':shipping_fee' => $calculated['shipping_fee'],
                 ':return_fee' => (float) ($data['return_fee'] ?? 0), ':total_fee' => $calculated['total_fee']
             ]);
-            $this->insertDetail($this->conn->lastInsertId(), $data, $calculated);
+            $orderId = (int) $this->conn->lastInsertId();
+            $this->insertDetail($orderId, $data, $calculated);
+            $accountId = (int) ($data['account_id'] ?? ($_SESSION['user_id'] ?? 0));
+            $this->insertHistory($orderId, 'Cho xac nhan', $accountId, 'Khách hàng tạo đơn hàng.');
+            $codAmount = (float) ($data['cod_amount'] ?? $calculated['goods_total']);
+            if ($codAmount > 0) {
+                $cod = $this->conn->prepare("INSERT INTO COD (MaDonHang, SoTienCOD, TrangThai, GhiChu) VALUES (:order_id, :amount, 'Chua thu', 'Thu hộ khi giao hàng')");
+                $cod->execute([':order_id' => $orderId, ':amount' => $codAmount]);
+            }
             $this->conn->commit();
-            return ['success' => true, 'message' => 'Tạo đơn hàng thành công.'];
+            return ['success' => true, 'message' => 'Tạo đơn hàng thành công. Phí vận chuyển: ' . number_format($calculated['shipping_fee'], 0, ',', '.') . 'đ'];
         } catch (Exception $exception) {
             if ($this->conn->inTransaction()) {
                 $this->conn->rollBack();
@@ -208,12 +220,14 @@ class OrderModel {
         try {
             $this->conn->beginTransaction();
 
-            $stmt = $this->conn->prepare("INSERT INTO DiemNhan (DiaChi, TinhThanh, QuanHuyen, PhuongXa, SoDienThoai) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$data['pickup_address'], $data['pickup_province'], $data['pickup_district'], $data['pickup_ward'], $data['pickup_phone']]);
+            $pickupArea = trim($data['pickup_district'] ?: $data['pickup_province']);
+            $deliveryArea = trim($data['delivery_district'] ?: $data['delivery_province']);
+            $stmt = $this->conn->prepare("INSERT INTO DiemNhan (DiaChi, KhuVuc, TinhThanh, QuanHuyen, PhuongXa, SoDienThoai) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['pickup_address'], $pickupArea, $data['pickup_province'], $data['pickup_district'], $data['pickup_ward'], $data['pickup_phone']]);
             $data['pickup_id'] = $this->conn->lastInsertId();
 
-            $stmt = $this->conn->prepare("INSERT INTO DiemGiao (TenNguoiNhan, SoDienThoai, DiaChi, TinhThanh, QuanHuyen, PhuongXa) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$data['delivery_name'], $data['delivery_phone'], $data['delivery_address'], $data['delivery_province'], $data['delivery_district'], $data['delivery_ward']]);
+            $stmt = $this->conn->prepare("INSERT INTO DiemGiao (TenNguoiNhan, SoDienThoai, DiaChi, KhuVuc, TinhThanh, QuanHuyen, PhuongXa) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['delivery_name'], $data['delivery_phone'], $data['delivery_address'], $deliveryArea, $data['delivery_province'], $data['delivery_district'], $data['delivery_ward']]);
             $data['delivery_id'] = $this->conn->lastInsertId();
 
             $product_ids = [];
@@ -373,11 +387,166 @@ class OrderModel {
         }
     }
 
-    public function cancel($id, $reason) {
-        $stmt = $this->conn->prepare("UPDATE DonHang SET TrangThai = 'Da huy', LyDoHuy = :reason WHERE MaDonHang = :id AND TrangThai IN ('Cho xac nhan', 'Da xac nhan', 'Cho phan cong')");
-        $stmt->execute([':reason' => $reason, ':id' => (int) $id]);
-        $changed = $stmt->rowCount() > 0;
-        return ['success' => $changed, 'message' => $changed ? 'Đã hủy đơn hàng.' : 'Đơn hàng không còn ở trạng thái được phép hủy.'];
+    public function cancel($id, $reason, $accountId = null) {
+        $reason = trim($reason);
+        if ($reason === '') {
+            return ['success' => false, 'message' => 'Vui lòng nhập lý do hủy đơn.'];
+        }
+        try {
+            $this->conn->beginTransaction();
+            $stmt = $this->conn->prepare("SELECT TrangThai FROM DonHang WHERE MaDonHang = :id FOR UPDATE");
+            $stmt->execute([':id' => (int) $id]);
+            $status = $stmt->fetchColumn();
+            if (!$status || !in_array($status, ['Cho xac nhan', 'Da xac nhan', 'Cho phan cong'], true)) {
+                $this->conn->rollBack();
+                return ['success' => false, 'message' => 'Đơn hàng không còn ở trạng thái được phép hủy.'];
+            }
+            $this->conn->prepare("UPDATE DonHang SET TrangThai = 'Da huy', LyDoHuy = :reason WHERE MaDonHang = :id")
+                ->execute([':reason' => $reason, ':id' => (int) $id]);
+            $this->conn->prepare("UPDATE PhanCong SET TrangThai = 'Da huy' WHERE MaDonHang = :id AND TrangThai NOT IN ('Hoan thanh', 'Da huy')")
+                ->execute([':id' => (int) $id]);
+            $this->insertHistory((int) $id, 'Da huy', $accountId ?: ($_SESSION['user_id'] ?? null), $reason);
+            $this->conn->commit();
+            return ['success' => true, 'message' => 'Đã hủy đơn hàng.'];
+        } catch (Exception $exception) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            return ['success' => false, 'message' => 'Không thể hủy đơn hàng.'];
+        }
+    }
+
+    public function receive($id, $accountId) {
+        return $this->advanceStatus($id, 'Cho xac nhan', 'Da xac nhan', $accountId, 'Điều phối tiếp nhận đơn hàng.');
+    }
+
+    public function queueForAssign($id, $accountId) {
+        return $this->advanceStatus($id, 'Da xac nhan', 'Cho phan cong', $accountId, 'Đơn sẵn sàng phân công tài xế.');
+    }
+
+    public function retryFailedDelivery($id, $accountId) {
+        return $this->advanceStatus($id, 'Giao khong thanh cong', 'Dang giao hang', $accountId, 'Điều phối yêu cầu giao lại.');
+    }
+
+    public function completeReturn($id, $reason, $returnFee, $accountId) {
+        $reason = trim($reason);
+        if ($reason === '') {
+            return ['success' => false, 'message' => 'Vui lòng ghi lý do hoàn hàng.'];
+        }
+        $returnFee = max(0, (float) $returnFee);
+        try {
+            $this->conn->beginTransaction();
+            $stmt = $this->conn->prepare("SELECT TrangThai, PhiVanChuyen FROM DonHang WHERE MaDonHang = :id FOR UPDATE");
+            $stmt->execute([':id' => (int) $id]);
+            $order = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$order || $order['TrangThai'] !== 'Giao khong thanh cong') {
+                $this->conn->rollBack();
+                return ['success' => false, 'message' => 'Chỉ hoàn hàng khi đơn đang ở trạng thái giao không thành công.'];
+            }
+            $total = (float) $order['PhiVanChuyen'] + $returnFee;
+            $this->conn->prepare("UPDATE DonHang SET TrangThai = 'Hoan hang', LyDoHoan = :reason, PhiHoan = :fee, TongPhi = :total WHERE MaDonHang = :id")
+                ->execute([':reason' => $reason, ':fee' => $returnFee, ':total' => $total, ':id' => (int) $id]);
+            $this->conn->prepare("UPDATE PhanCong SET TrangThai = 'Hoan hang' WHERE MaDonHang = :id AND TrangThai NOT IN ('Da huy')")
+                ->execute([':id' => (int) $id]);
+            $this->conn->prepare("UPDATE COD SET TrangThai = 'Khong thu', GhiChu = :note WHERE MaDonHang = :id")
+                ->execute([':note' => 'Không thu do hoàn hàng. ' . $reason, ':id' => (int) $id]);
+            $this->insertHistory((int) $id, 'Hoan hang', $accountId, $reason);
+            $this->conn->commit();
+            return ['success' => true, 'message' => 'Đã ghi nhận hoàn hàng.'];
+        } catch (Exception $exception) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            return ['success' => false, 'message' => 'Không thể hoàn hàng.'];
+        }
+    }
+
+    public function getHistory($orderId) {
+        $stmt = $this->conn->prepare("SELECT ls.TrangThai, ls.ThoiGian, ls.GhiChu, tk.TenDangNhap
+            FROM LichSuTrangThai ls
+            LEFT JOIN TaiKhoan tk ON tk.MaTaiKhoan = ls.MaTaiKhoan
+            WHERE ls.MaDonHang = :id ORDER BY ls.ThoiGian ASC, ls.MaLichSu ASC");
+        $stmt->execute([':id' => (int) $orderId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function searchOrders($keyword = '', $status = '', $customerAccountId = null, $driverId = null) {
+        $query = "SELECT d.MaDonHang, d.NgayTao, d.TongKhoiLuong, d.TienHang, d.PhiVanChuyen, d.PhiHoan,
+                         d.TongPhi, d.TrangThai, d.LyDoHuy, d.LyDoHoan,
+                         k.HoTen AS TenKhachHang, k.SoDienThoai AS SDTKhach,
+                         dn.DiaChi AS DiaChiNhan, dn.KhuVuc AS KhuVucNhan,
+                         dg.TenNguoiNhan, dg.SoDienThoai AS SDTNhan, dg.DiaChi AS DiaChiGiao, dg.KhuVuc AS KhuVucGiao,
+                         tx.HoTen AS TenTaiXe, tx.KhuVucHienTai,
+                         cod.SoTienCOD, cod.TrangThai AS TrangThaiCOD
+                  FROM DonHang d
+                  LEFT JOIN KhachHang k ON k.MaKhachHang = d.MaKhachHang
+                  LEFT JOIN DiemNhan dn ON dn.MaDiemNhan = d.MaDiemNhan
+                  LEFT JOIN DiemGiao dg ON dg.MaDiemGiao = d.MaDiemGiao
+                  LEFT JOIN COD cod ON cod.MaDonHang = d.MaDonHang
+                  LEFT JOIN PhanCong pc ON pc.MaDonHang = d.MaDonHang AND pc.TrangThai <> 'Da huy'
+                    AND pc.MaPhanCong = (SELECT MAX(p2.MaPhanCong) FROM PhanCong p2 WHERE p2.MaDonHang = d.MaDonHang AND p2.TrangThai <> 'Da huy')
+                  LEFT JOIN TaiXe tx ON tx.MaTaiXe = pc.MaTaiXe
+                  WHERE 1 = 1";
+        $params = [];
+        if ($customerAccountId !== null) {
+            $query .= ' AND k.MaTaiKhoan = :account_id';
+            $params[':account_id'] = (int) $customerAccountId;
+        }
+        if ($driverId !== null) {
+            $query .= ' AND pc.MaTaiXe = :driver_id';
+            $params[':driver_id'] = (int) $driverId;
+        }
+        if ($keyword !== '') {
+            $query .= " AND (CAST(d.MaDonHang AS CHAR) LIKE :keyword OR k.HoTen LIKE :keyword
+                OR dg.TenNguoiNhan LIKE :keyword OR dg.SoDienThoai LIKE :keyword OR k.SoDienThoai LIKE :keyword)";
+            $params[':keyword'] = '%' . $keyword . '%';
+        }
+        if ($status !== '') {
+            $query .= ' AND d.TrangThai = :status';
+            $params[':status'] = $status;
+        }
+        $query .= ' ORDER BY d.MaDonHang DESC';
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getFailedDeliveries() {
+        return $this->searchOrders('', 'Giao khong thanh cong');
+    }
+
+    private function advanceStatus($id, $from, $to, $accountId, $note) {
+        try {
+            $this->conn->beginTransaction();
+            $stmt = $this->conn->prepare("SELECT TrangThai FROM DonHang WHERE MaDonHang = :id FOR UPDATE");
+            $stmt->execute([':id' => (int) $id]);
+            $status = $stmt->fetchColumn();
+            if ($status !== $from) {
+                $this->conn->rollBack();
+                return ['success' => false, 'message' => 'Trạng thái đơn không còn phù hợp để thao tác này.'];
+            }
+            $this->conn->prepare("UPDATE DonHang SET TrangThai = :status WHERE MaDonHang = :id")
+                ->execute([':status' => $to, ':id' => (int) $id]);
+            $this->insertHistory((int) $id, $to, $accountId, $note);
+            $this->conn->commit();
+            return ['success' => true, 'message' => 'Đã cập nhật trạng thái: ' . $to];
+        } catch (Exception $exception) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            return ['success' => false, 'message' => 'Không thể cập nhật trạng thái đơn hàng.'];
+        }
+    }
+
+    private function insertHistory($orderId, $status, $accountId, $note) {
+        $stmt = $this->conn->prepare("INSERT INTO LichSuTrangThai (MaDonHang, TrangThai, MaTaiKhoan, GhiChu)
+            VALUES (:order_id, :status, :account_id, :note)");
+        $stmt->execute([
+            ':order_id' => (int) $orderId,
+            ':status' => $status,
+            ':account_id' => $accountId ? (int) $accountId : null,
+            ':note' => $note
+        ]);
     }
 
     public function delete($id) {

@@ -44,10 +44,10 @@ $statusClass = [
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="dashboard-body">
-    <?php include 'views/sidebar.php'; ?>
+    <?php include 'views/menu.php'; ?>
     <main class="main-content">
         <header class="topbar">
-            <div class="search-bar"><form action="index.php" method="GET" class="driver-order-search"><input type="hidden" name="page" value="tracking"><i class="fas fa-search search-icon"></i><input name="keyword" placeholder="Tìm mã đơn, người nhận, địa chỉ..." value="<?php echo htmlspecialchars($keyword); ?>"></form></div>
+            <div class="search-bar"><form action="index.php" method="GET" class="driver-order-search"><input type="hidden" name="page" value="donhangtaixe"><i class="fas fa-search search-icon"></i><input name="keyword" placeholder="Tìm mã đơn, người nhận, địa chỉ..." value="<?php echo htmlspecialchars($keyword); ?>"></form></div>
             <div class="topbar-right"><div class="user-dropdown"><img src="https://ui-avatars.com/api/?name=<?php echo urlencode($_SESSION['username'] ?? 'Driver'); ?>&background=4361ee&color=fff" class="topbar-avatar" alt="Tài xế"><span class="user-greeting">Xin chào, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Tài xế'); ?>!</span></div></div>
         </header>
         <div class="content-area driver-page">
@@ -56,7 +56,7 @@ $statusClass = [
 
             <?php if ($isDriver): ?><section class="driver-location-bar">
                 <div><span class="driver-section-label">Vị trí hiện tại</span><strong><?php echo htmlspecialchars($currentLocation ?: 'Chưa cập nhật'); ?></strong></div>
-                <form method="POST" action="index.php?page=tracking" class="driver-location-form">
+                <form method="POST" action="index.php?page=donhangtaixe" class="driver-location-form">
                     <input type="hidden" name="action" value="location"><input type="hidden" name="keyword" value="<?php echo htmlspecialchars($keyword); ?>">
                     <label class="sr-only" for="driverLocation">Cập nhật khu vực</label><input id="driverLocation" name="location" maxlength="100" placeholder="Nhập khu vực hiện tại" required>
                     <button class="btn btn-primary" type="submit"><i class="fas fa-location-dot"></i> Cập nhật vị trí</button>
@@ -77,8 +77,8 @@ $statusClass = [
                     $isActiveAssignment = !in_array($order['TrangThaiPhanCong'], ['Hoan thanh', 'Hoan tat', 'Da huy'], true)
                         && !in_array($currentStatus, ['Hoan tat', 'Hoan hang', 'Da huy'], true);
                 ?>
-                <tr class="driver-order-row" data-detail-url="index.php?page=tracking&view=<?php echo (int) $order['MaDonHang']; ?>">
-                    <td data-label="Đơn hàng"><a class="driver-order-link" href="index.php?page=tracking&view=<?php echo (int) $order['MaDonHang']; ?>"><strong class="driver-order-number">#<?php echo (int) $order['MaDonHang']; ?></strong><small class="driver-table-muted"><?php echo number_format((float) $order['TongKhoiLuong'], 1, ',', '.'); ?> kg</small></a></td>
+                <tr class="driver-order-row" data-detail-url="index.php?page=donhangtaixe&view=<?php echo (int) $order['MaDonHang']; ?>">
+                    <td data-label="Đơn hàng"><a class="driver-order-link" href="index.php?page=donhangtaixe&view=<?php echo (int) $order['MaDonHang']; ?>"><strong class="driver-order-number">#<?php echo (int) $order['MaDonHang']; ?></strong><small class="driver-table-muted"><?php echo number_format((float) $order['TongKhoiLuong'], 1, ',', '.'); ?> kg</small></a></td>
                     <td data-label="Điểm giao"><strong><?php echo htmlspecialchars($order['TenNguoiNhan'] ?? ''); ?> · <?php echo htmlspecialchars($order['SDTNhan'] ?? ''); ?></strong><span class="driver-table-muted"><?php echo htmlspecialchars($order['DiaChiGiao'] ?? ''); ?></span><span class="driver-table-muted"><?php echo htmlspecialchars($order['KhuVucGiao'] ?? ''); ?></span></td>
                     <td data-label="Hàng hóa"><span><?php echo htmlspecialchars($order['HangHoa'] ?? 'Chưa có hàng hóa'); ?></span><span class="driver-table-muted">Nhận: <?php echo htmlspecialchars($order['DiaChiNhan'] ?? ''); ?></span></td>
                     <td data-label="Trạng thái"><span class="driver-status <?php echo $statusClass[$currentStatus] ?? 'driver-status-pending'; ?>"><?php echo htmlspecialchars($statusLabels[$currentStatus] ?? $currentStatus); ?></span></td>
@@ -86,7 +86,7 @@ $statusClass = [
                     <td data-label="Thao tác" class="driver-table-actions">
                         <?php if (!$canManageDriverOrders): ?><span class="driver-readonly-note"><i class="fas fa-lock"></i> Chỉ tài xế hoặc admin được chuyển trạng thái</span><?php endif; ?>
                         <?php if ($canManageDriverOrders && $isActiveAssignment && $nextStatuses): ?>
-                        <form method="POST" action="index.php?page=tracking" class="driver-status-form">
+                        <form method="POST" action="index.php?page=donhangtaixe" class="driver-status-form">
                             <input type="hidden" name="action" value="status"><input type="hidden" name="order_id" value="<?php echo (int) $order['MaDonHang']; ?>"><input type="hidden" name="keyword" value="<?php echo htmlspecialchars($keyword); ?>">
                             <div class="driver-next-statuses"><span class="driver-action-label">Chuyển đổi trạng thái</span><?php foreach ($nextStatuses as $nextStatus): ?><button class="btn btn-primary" type="submit" name="status" value="<?php echo htmlspecialchars($nextStatus); ?>"><i class="fas fa-arrow-right"></i> <?php echo htmlspecialchars($statusLabels[$nextStatus] ?? $nextStatus); ?></button><?php endforeach; ?></div>
                             <label class="driver-note-field">Ghi chú / lý do<textarea name="note" rows="1" placeholder="Lý do nếu giao thất bại"></textarea></label>
@@ -94,15 +94,15 @@ $statusClass = [
                         <?php elseif ($canManageDriverOrders && !$isActiveAssignment): ?><span class="driver-completed"><i class="fas fa-circle-check"></i> Đã hoàn thành</span><?php endif; ?>
 
                         <?php if ($canManageDriverOrders && !empty($order['SoTienCOD']) && in_array($order['TrangThai'], ['Da giao hang', 'Hoan tat'], true)): ?>
-                        <form method="POST" action="index.php?page=tracking" class="driver-cod-form">
-                            <input type="hidden" name="action" value="cod"><input type="hidden" name="order_id" value="<?php echo (int) $order['MaDonHang']; ?>"><input type="hidden" name="keyword" value="<?php echo htmlspecialchars($keyword); ?>">
+                        <form method="POST" action="index.php?page=donhangtaixe" class="driver-cod-form">
+                            <input type="hidden" name="action" value="thuho"><input type="hidden" name="order_id" value="<?php echo (int) $order['MaDonHang']; ?>"><input type="hidden" name="keyword" value="<?php echo htmlspecialchars($keyword); ?>">
                             <label>Thu COD<select name="cod_status"><option value="Da thu" <?php echo ($order['TrangThaiCOD'] ?? '') === 'Da thu' ? 'selected' : ''; ?>>Đã thu đủ</option><option value="Chua thu" <?php echo ($order['TrangThaiCOD'] ?? '') === 'Chua thu' ? 'selected' : ''; ?>>Chưa thu</option><option value="Khong thu" <?php echo ($order['TrangThaiCOD'] ?? '') === 'Khong thu' ? 'selected' : ''; ?>>Không thu được</option></select></label>
                             <label class="driver-note-field">Ghi chú COD<input name="cod_note" value="<?php echo htmlspecialchars($order['GhiChuCOD'] ?? ''); ?>" placeholder="Ghi nhận thu tiền"></label>
                             <button class="btn btn-outline" type="submit"><i class="fas fa-coins"></i> Lưu COD</button>
                         </form>
                         <?php endif; ?>
                         <?php if ($isCustomer && in_array($order['TrangThai'], ['Cho xac nhan', 'Da xac nhan', 'Cho phan cong'], true)): ?>
-                        <form method="POST" action="index.php?page=tracking" class="driver-cancel-form" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
+                        <form method="POST" action="index.php?page=donhangtaixe" class="driver-cancel-form" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
                             <input type="hidden" name="action" value="cancel"><input type="hidden" name="order_id" value="<?php echo (int) $order['MaDonHang']; ?>"><input type="hidden" name="keyword" value="<?php echo htmlspecialchars($keyword); ?>">
                             <label>Lý do hủy<input name="reason" maxlength="255" required placeholder="Nhập lý do hủy đơn"></label><button class="btn btn-outline text-danger" type="submit"><i class="fas fa-ban"></i> Hủy đơn</button>
                         </form>

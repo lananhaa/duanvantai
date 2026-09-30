@@ -174,10 +174,9 @@ class DriverOrderModel {
             'Da nhan hang' => ['Dang van chuyen'],
             'Dang van chuyen' => ['Dang giao hang'],
             'Dang giao hang' => ['Da giao hang', 'Giao khong thanh cong'],
-            'Giao khong thanh cong' => ['Dang giao hang', 'Hoan hang'],
             'Da giao hang' => ['Hoan tat']
         ];
-        if (in_array($newStatus, ['Giao khong thanh cong', 'Hoan hang'], true) && trim($note) === '') {
+        if ($newStatus === 'Giao khong thanh cong' && trim($note) === '') {
             return ['success' => false, 'message' => 'Vui lòng ghi lý do giao không thành công hoặc hoàn hàng.'];
         }
 
@@ -211,7 +210,7 @@ class DriverOrderModel {
             ]);
 
             $assignedDriverId = (int) ($order['MaTaiXe'] ?? $driverId);
-            if (in_array($newStatus, ['Hoan tat', 'Hoan hang'], true)) {
+            if ($newStatus === 'Hoan tat') {
                 $this->conn->prepare("UPDATE PhanCong SET TrangThai = 'Hoan thanh' WHERE MaPhanCong = :assignment_id")
                     ->execute([':assignment_id' => (int) $order['MaPhanCong']]);
                 $remaining = $this->conn->prepare("SELECT COUNT(*) FROM PhanCong

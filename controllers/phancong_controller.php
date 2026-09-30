@@ -1,5 +1,5 @@
 <?php
-require_once 'models/AssignModel.php';
+require_once 'models/phancong_model.php';
 
 class AssignController {
     private AssignModel $model;
@@ -16,7 +16,7 @@ class AssignController {
             echo '<div style="padding:40px;text-align:center;color:#991b1b;">
                     <h2>⛔ Từ chối truy cập</h2>
                     <p>Bạn không có quyền thực hiện chức năng Phân công tài xế.</p>
-                    <a href="index.php?page=dashboard">← Quay lại Trang chủ</a>
+                    <a href="index.php?page=trangchu">← Quay lại Trang chủ</a>
                   </div>';
             exit;
         }
@@ -26,7 +26,7 @@ class AssignController {
 
         // ─── Xử lý hành động POST (phân công)
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-            if ($_POST['action'] === 'assign') {
+            if ($_POST['action'] === 'phancong') {
                 $maDonHang  = (int)($_POST['don_hang_id'] ?? 0);
                 $maTaiXe    = (int)($_POST['tai_xe_id']   ?? 0);
                 $ghiChu     = trim($_POST['ghi_chu']      ?? '');
@@ -63,7 +63,7 @@ class AssignController {
         $orders  = $this->model->getOrdersPending($keyword);
         $drivers = $this->model->getDrivers($driverKeyword, $driverStatus);
 
-        require_once 'views/assign.php';
+        require_once 'views/phancong.php';
     }
 }
 ?>

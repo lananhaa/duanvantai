@@ -9,13 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="dashboard-body">
-    <?php include 'views/sidebar.php'; ?>
+    <?php include 'views/menu.php'; ?>
 
     <main class="main-content">
         <header class="topbar">
             <div class="search-bar">
                 <form action="index.php" method="GET" style="display: flex; width: 100%;">
-                    <input type="hidden" name="page" value="customers">
+                    <input type="hidden" name="page" value="khachhang">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" name="keyword" placeholder="Tìm kiếm họ tên, sđt, email..." value="<?php echo htmlspecialchars($_GET['keyword'] ?? ''); ?>">
                 </form>
@@ -81,7 +81,7 @@
                                             data-phone="<?php echo htmlspecialchars($row['SoDienThoai'] ?? '', ENT_QUOTES); ?>"
                                             data-email="<?php echo htmlspecialchars($row['Email'] ?? '', ENT_QUOTES); ?>"
                                             data-address="<?php echo htmlspecialchars($row['DiaChi'] ?? '', ENT_QUOTES); ?>"><i class="fas fa-edit"></i></button>
-                                        <a href="index.php?page=customers&action=delete&id=<?php echo $row['MaKhachHang']; ?>" class="btn-icon text-danger" onclick="return confirm('Bạn có chắc muốn xóa khách hàng này?');"><i class="fas fa-trash-alt"></i></a>
+                                        <a href="index.php?page=khachhang&action=delete&id=<?php echo $row['MaKhachHang']; ?>" class="btn-icon text-danger" onclick="return confirm('Bạn có chắc muốn xóa khách hàng này?');"><i class="fas fa-trash-alt"></i></a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -100,7 +100,7 @@
                 <div><h2 id="customerModalTitle">Thêm khách hàng</h2><p>Thông tin tài khoản và liên hệ</p></div>
                 <button class="modal-close" type="button" aria-label="Đóng" data-close-customer-modal><i class="fas fa-times"></i></button>
             </div>
-            <form method="POST" action="index.php?page=customers" id="customerForm">
+            <form method="POST" action="index.php?page=khachhang" id="customerForm">
                 <input type="hidden" name="id" id="customerId" value="">
                 <div class="customer-form-grid">
                     <div class="input-group"><label for="customerName">Họ tên <span>*</span></label><input id="customerName" name="name" required></div>

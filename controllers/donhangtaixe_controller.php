@@ -1,5 +1,5 @@
 <?php
-require_once 'models/DriverOrderModel.php';
+require_once 'models/donhangtaixe_model.php';
 
 class DriverOrderController {
     public function index() {
@@ -29,7 +29,7 @@ class DriverOrderController {
                     trim($_POST['status'] ?? ''),
                     trim($_POST['note'] ?? '')
                 );
-            } elseif (($role === 3 || $isAdmin) && $action === 'cod') {
+            } elseif (($role === 3 || $isAdmin) && $action === 'thuho') {
                 $result = $model->updateCod(
                     $_POST['order_id'] ?? 0,
                     $driverId,
@@ -53,7 +53,7 @@ class DriverOrderController {
 
             $_SESSION['tracking_flash'] = $result;
             $keyword = trim($_POST['keyword'] ?? '');
-            header('Location: index.php?page=tracking' . ($keyword !== '' ? '&keyword=' . urlencode($keyword) : ''));
+            header('Location: index.php?page=donhangtaixe' . ($keyword !== '' ? '&keyword=' . urlencode($keyword) : ''));
             exit;
         }
 
@@ -85,11 +85,11 @@ class DriverOrderController {
                 exit;
             }
             $detailHistory = $model->getOrderHistory($viewId, $role === 3 ? $driverId : null);
-            require_once 'views/driver_order_detail.php';
+            require_once 'views/chitietdonhangtaixe.php';
             exit;
         }
         $currentLocation = $role === 3 ? $model->getCurrentLocation($driverId) : '';
-        require_once 'views/driver_orders.php';
+        require_once 'views/donhangtaixe.php';
     }
 }
 ?>

@@ -26,7 +26,7 @@ class AssignModel {
                   LEFT JOIN TuyenGiao tn ON d.MaTuyenGiao = tn.MaTuyenGiao
                   LEFT JOIN PhanCong pc  ON d.MaDonHang   = pc.MaDonHang AND pc.TrangThai != 'Da huy'
                   LEFT JOIN TaiXe tx     ON pc.MaTaiXe    = tx.MaTaiXe
-                  WHERE d.TrangThai NOT IN ('Da giao hang', 'Hoan tat', 'Da huy')";
+                  WHERE d.TrangThai IN ('Cho phan cong', 'Da phan cong', 'Giao khong thanh cong')";
         $params = [];
         if (!empty($keyword)) {
             $query .= " AND (CAST(d.MaDonHang AS CHAR) LIKE :kw OR k.HoTen LIKE :kw

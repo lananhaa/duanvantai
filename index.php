@@ -57,7 +57,11 @@ if ($page === 'dangnhap') {
         require_once 'controllers/tuyengiao_controller.php';
         $controller = new RouteController();
         $controller->index();
-    } elseif ($page === 'diadiem') {
+    } elseif ($page === 'phivanchuyen') {
+        require_once 'controllers/phivanchuyen_controler.php';
+        $controller = new PhivanchuyenControler();
+        $controller->index();
+    }elseif ($page === 'diadiem') {
         require_once 'controllers/diadiem_controller.php';
         $controller = new LocationController();
         $controller->index();

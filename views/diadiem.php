@@ -90,7 +90,7 @@
     .input-group label span {
         color: #ef4444;
     }
-    .input-group input {
+    .input-group input, .input-group select {
         width: 100%;
         padding: 8px 12px;
         border: 1px solid #cbd5e1;
@@ -98,8 +98,9 @@
         font-size: 0.875rem;
         outline: none;
         box-sizing: border-box;
+        background-color: #fff;
     }
-    .input-group input:focus {
+    .input-group input:focus, .input-group select:focus {
         border-color: #4361ee;
         box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
     }
@@ -148,7 +149,7 @@
             </div>
         </div>
 
-        <?php if ($message !== ''): ?>
+        <?php if (!empty($message)): ?>
         <div class="alert-message <?php echo $messageType; ?>"><?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
 
@@ -179,7 +180,7 @@
                         <?php if (empty($pickups)): ?>
                             <tr><td colspan="8" class="text-center">Không có điểm nhận nào.</td></tr>
                         <?php else: ?>
-                        <?php foreach ($pickups as $p): ?>
+                        <?php foreach ($pickups as$p): ?>
                             <tr>
                                 <td>#<?php echo $p['MaDiemNhan']; ?></td>
                                 <td class="font-medium" style="max-width:200px;"><?php echo htmlspecialchars($p['DiaChi']); ?></td>
@@ -214,7 +215,7 @@
                         <?php if (empty($deliveries)): ?>
                             <tr><td colspan="8" class="text-center">Không có điểm giao nào.</td></tr>
                         <?php else: ?>
-                        <?php foreach ($deliveries as $d): ?>
+                        <?php foreach ($deliveries as$d): ?>
                             <tr>
                                 <td>#<?php echo $d['MaDiemGiao']; ?></td>
                                 <td class="font-medium"><?php echo htmlspecialchars($d['TenNguoiNhan']); ?></td>
@@ -239,6 +240,39 @@
     </div>
 </main>
 
+<?php
+// Danh sách có sẵn 63 Tỉnh Thành Việt Nam
+function renderProvinceOptions() {
+    $provinces = [
+        "1" => "Thành phố Hà Nội", "79" => "Thành phố Hồ Chí Minh", "48" => "Thành phố Đà Nẵng",
+        "31" => "Thành phố Hải Phòng", "92" => "Thành phố Cần Thơ", "2" => "Tỉnh Hà Giang",
+        "4" => "Tỉnh Cao Bằng", "6" => "Tỉnh Bắc Kạn", "8" => "Tỉnh Tuyên Quang",
+        "10" => "Tỉnh Lào Cai", "11" => "Tỉnh Điện Biên", "12" => "Tỉnh Lai Châu",
+        "14" => "Tỉnh Sơn La", "15" => "Tỉnh Yên Bái", "17" => "Tỉnh Hoà Bình",
+        "19" => "Tỉnh Thái Nguyên", "20" => "Tỉnh Lạng Sơn", "22" => "Tỉnh Quảng Ninh",
+        "24" => "Tỉnh Bắc Giang", "25" => "Tỉnh Phú Thọ", "26" => "Tỉnh Vĩnh Phúc",
+        "27" => "Tỉnh Bắc Ninh", "30" => "Tỉnh Hải Dương", "33" => "Tỉnh Hưng Yên",
+        "34" => "Tỉnh Thái Bình", "35" => "Tỉnh Hà Nam", "36" => "Tỉnh Nam Định",
+        "37" => "Tỉnh Ninh Bình", "38" => "Tỉnh Thanh Hóa", "40" => "Tỉnh Nghệ An",
+        "42" => "Tỉnh Hà Tĩnh", "44" => "Tỉnh Quảng Bình", "45" => "Tỉnh Quảng Trị",
+        "46" => "Tỉnh Thừa Thiên Huế", "49" => "Tỉnh Quảng Nam", "51" => "Tỉnh Quảng Ngãi",
+        "52" => "Tỉnh Bình Định", "54" => "Tỉnh Phú Yên", "56" => "Tỉnh Khánh Hòa",
+        "58" => "Tỉnh Ninh Thuận", "60" => "Tỉnh Bình Thuận", "62" => "Tỉnh Kon Tum",
+        "64" => "Tỉnh Gia Lai", "66" => "Tỉnh Đắk Lắk", "67" => "Tỉnh Đắk Nông",
+        "68" => "Tỉnh Lâm Đồng", "70" => "Tỉnh Bình Phước", "72" => "Tỉnh Tây Ninh",
+        "74" => "Tỉnh Bình Dương", "75" => "Tỉnh Đồng Nai", "77" => "Tỉnh Bà Rịa - Vũng Tàu",
+        "80" => "Tỉnh Long An", "82" => "Tỉnh Tiền Giang", "83" => "Tỉnh Bến Tre",
+        "84" => "Tỉnh Trà Vinh", "86" => "Tỉnh Vĩnh Long", "87" => "Tỉnh Đồng Tháp",
+        "89" => "Tỉnh An Giang", "91" => "Tỉnh Kiên Giang", "93" => "Tỉnh Hậu Giang",
+        "94" => "Tỉnh Sóc Trăng", "95" => "Tỉnh Bạc Liêu", "96" => "Tỉnh Cà Mau"
+    ];
+    $html = '<option value="">-- Chọn Tỉnh/Thành --</option>';
+    foreach ($provinces as$id => $name) {$html .= '<option value="' . $name . '" data-id="' . $id . '">' . $name . '</option>';
+    }
+    return $html;
+}
+?>
+
 <!-- Modal Điểm Nhận -->
 <div class="customer-modal" id="pickupModal" aria-hidden="true">
     <div class="customer-modal-backdrop" onclick="closePickupModal()"></div>
@@ -255,15 +289,33 @@
             <input type="hidden" name="id" id="pickupId" value="">
             <div class="customer-form-grid">
                 <div class="input-group customer-form-wide">
-                    <label>Địa chỉ <span>*</span></label>
-                    <input name="dia_chi" id="pickupDiaChi" required>
+                    <label>Địa chỉ cụ thể (Số nhà, đường) <span>*</span></label>
+                    <input name="dia_chi" id="pickupDiaChi" required placeholder="VD: Số 10 Nguyễn Trãi">
                 </div>
-                <div class="input-group"><label>Khu vực</label><input name="khu_vuc" id="pickupKhuVuc"></div>
-                <div class="input-group"><label>Tỉnh/Thành</label><input name="tinh_thanh" id="pickupTinhThanh"></div>
-                <div class="input-group"><label>Quận/Huyện</label><input name="quan_huyen" id="pickupQuanHuyen"></div>
-                <div class="input-group"><label>Phường/Xã</label><input name="phuong_xa" id="pickupPhuongXa"></div>
-                <div class="input-group"><label>Số điện thoại</label><input name="sdt" id="pickupSdt" type="tel"></div>
-                <div class="input-group customer-form-wide"><label>Ghi chú</label><input name="ghi_chu" id="pickupGhiChu"></div>
+                <div class="input-group">
+                    <label>Tỉnh / Thành phố <span>*</span></label>
+                    <select name="tinh_thanh" id="pickupTinhThanh" onchange="loadWardsDirectly('pickup')">
+                        <?php echo renderProvinceOptions(); ?>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Phường / Xã</label>
+                    <select name="phuong_xa" id="pickupPhuongXa">
+                        <option value="">-- Chọn Phường/Xã --</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Khu vực (Tên gợi nhớ)</label>
+                    <input name="khu_vuc" id="pickupKhuVuc" placeholder="VD: Thanh Xuân">
+                </div>
+                <div class="input-group">
+                    <label>Số điện thoại</label>
+                    <input name="sdt" id="pickupSdt" type="tel">
+                </div>
+                <div class="input-group customer-form-wide">
+                    <label>Ghi chú</label>
+                    <input name="ghi_chu" id="pickupGhiChu">
+                </div>
             </div>
             <div class="customer-modal-footer">
                 <button class="btn btn-outline" type="button" onclick="closePickupModal()">Hủy</button>
@@ -292,16 +344,34 @@
                     <label>Tên người nhận <span>*</span></label>
                     <input name="ten_nguoi_nhan" id="deliveryTen" required>
                 </div>
-                <div class="input-group"><label>Số điện thoại</label><input name="sdt" id="deliverySdt" type="tel"></div>
-                <div class="input-group customer-form-wide">
-                    <label>Địa chỉ <span>*</span></label>
-                    <input name="dia_chi" id="deliveryDiaChi" required>
+                <div class="input-group">
+                    <label>Số điện thoại</label>
+                    <input name="sdt" id="deliverySdt" type="tel">
                 </div>
-                <div class="input-group"><label>Khu vực</label><input name="khu_vuc" id="deliveryKhuVuc"></div>
-                <div class="input-group"><label>Tỉnh/Thành</label><input name="tinh_thanh" id="deliveryTinhThanh"></div>
-                <div class="input-group"><label>Quận/Huyện</label><input name="quan_huyen" id="deliveryQuanHuyen"></div>
-                <div class="input-group"><label>Phường/Xã</label><input name="phuong_xa" id="deliveryPhuongXa"></div>
-                <div class="input-group customer-form-wide"><label>Ghi chú</label><input name="ghi_chu" id="deliveryGhiChu"></div>
+                <div class="input-group customer-form-wide">
+                    <label>Địa chỉ cụ thể (Số nhà, đường) <span>*</span></label>
+                    <input name="dia_chi" id="deliveryDiaChi" required placeholder="VD: Số 20 Lê Văn Lương">
+                </div>
+                <div class="input-group">
+                    <label>Tỉnh / Thành phố <span>*</span></label>
+                    <select name="tinh_thanh" id="deliveryTinhThanh" onchange="loadWardsDirectly('delivery')">
+                        <?php echo renderProvinceOptions(); ?>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Phường / Xã</label>
+                    <select name="phuong_xa" id="deliveryPhuongXa">
+                        <option value="">-- Chọn Phường/Xã --</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Khu vực (Tên gợi nhớ)</label>
+                    <input name="khu_vuc" id="deliveryKhuVuc" placeholder="VD: Cầu Giấy">
+                </div>
+                <div class="input-group customer-form-wide">
+                    <label>Ghi chú</label>
+                    <input name="ghi_chu" id="deliveryGhiChu">
+                </div>
             </div>
             <div class="customer-modal-footer">
                 <button class="btn btn-outline" type="button" onclick="closeDeliveryModal()">Hủy</button>
@@ -312,6 +382,49 @@
 </div>
 
 <script>
+// Tải trực tiếp Phường/Xã từ API OpenAPI Vietnam (Hỗ trợ depth=3)
+function loadWardsDirectly(prefix, selectedWard = '') {
+    const provinceSelect = document.getElementById(prefix + 'TinhThanh');
+    const wardSelect = document.getElementById(prefix + 'PhuongXa');
+    
+    wardSelect.innerHTML = '<option value="">-- Đang tải Phường/Xã... --</option>';
+    
+    const selectedOpt = provinceSelect.options[provinceSelect.selectedIndex];
+    const provinceId = selectedOpt ? selectedOpt.getAttribute('data-id') : null;
+
+    if (!provinceId) {
+        wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+        return;
+    }
+
+    // API Open-API lấy toàn bộ Huyện & Xã thuộc Tỉnh
+    fetch(`https://provinces.open-api.vn/api/p/${provinceId}?depth=3`)
+        .then(res => res.json())
+        .then(data => {
+            wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+            if (data && data.districts) {
+                // Gom tất cả xã từ các huyện vào 1 danh sách
+                data.districts.forEach(district => {
+                    if (district.wards) {
+                        district.wards.forEach(w => {
+                            let opt = document.createElement('option');
+                            opt.value = w.name;
+                            opt.textContent = w.name + ' (' + district.name + ')'; // Hiện kèm tên Huyện để dễ phân biệt
+                            if (selectedWard && (w.name === selectedWard || w.name.includes(selectedWard))) {
+                                opt.selected = true;
+                            }
+                            wardSelect.appendChild(opt);
+                        });
+                    }
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Lỗi tải Xã:', err);
+            wardSelect.innerHTML = '<option value="">-- Nhập tên Xã hoặc chọn lại --</option>';
+        });
+}
+
 function openPickupModal(data) {
     var m = document.getElementById('pickupModal');
     if (!m) return;
@@ -322,11 +435,19 @@ function openPickupModal(data) {
         document.getElementById('pickupId').value        = data.MaDiemNhan || '';
         document.getElementById('pickupDiaChi').value    = data.DiaChi || '';
         document.getElementById('pickupKhuVuc').value    = data.KhuVuc || '';
-        document.getElementById('pickupTinhThanh').value = data.TinhThanh || '';
-        document.getElementById('pickupQuanHuyen').value = data.QuanHuyen || '';
-        document.getElementById('pickupPhuongXa').value  = data.PhuongXa || '';
         document.getElementById('pickupSdt').value       = data.SoDienThoai || '';
         document.getElementById('pickupGhiChu').value    = data.GhiChu || '';
+
+        if (data.TinhThanh) {
+            let pSelect = document.getElementById('pickupTinhThanh');
+            for (let i = 0; i < pSelect.options.length; i++) {
+                if (pSelect.options[i].value === data.TinhThanh || pSelect.options[i].text.includes(data.TinhThanh)) {
+                    pSelect.selectedIndex = i;
+                    loadWardsDirectly('pickup', data.PhuongXa);
+                    break;
+                }
+            }
+        }
     } else {
         document.getElementById('pickupModalTitle').textContent = 'Thêm điểm nhận';
         document.getElementById('pickupForm').reset();
@@ -353,10 +474,18 @@ function openDeliveryModal(data) {
         document.getElementById('deliverySdt').value       = data.SoDienThoai || '';
         document.getElementById('deliveryDiaChi').value    = data.DiaChi || '';
         document.getElementById('deliveryKhuVuc').value    = data.KhuVuc || '';
-        document.getElementById('deliveryTinhThanh').value = data.TinhThanh || '';
-        document.getElementById('deliveryQuanHuyen').value = data.QuanHuyen || '';
-        document.getElementById('deliveryPhuongXa').value  = data.PhuongXa || '';
         document.getElementById('deliveryGhiChu').value    = data.GhiChu || '';
+
+        if (data.TinhThanh) {
+            let pSelect = document.getElementById('deliveryTinhThanh');
+            for (let i = 0; i < pSelect.options.length; i++) {
+                if (pSelect.options[i].value === data.TinhThanh || pSelect.options[i].text.includes(data.TinhThanh)) {
+                    pSelect.selectedIndex = i;
+                    loadWardsDirectly('delivery', data.PhuongXa);
+                    break;
+                }
+            }
+        }
     } else {
         document.getElementById('deliveryModalTitle').textContent = 'Thêm điểm giao';
         document.getElementById('deliveryForm').reset();

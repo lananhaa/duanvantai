@@ -37,6 +37,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="index.php?page=phivanchuyen" class="nav-link <?php echo $activePage === 'phivanchuyen' ? 'active' : ''; ?>">
+                        <i class="fas fa-calculator"></i>
+                        <span class="nav-text">Quản lý phí vận chuyển</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="index.php?page=donhangtaixe" class="nav-link <?php echo in_array($activePage, ['donhangtaixe', 'donhangtaixe'], true) ? 'active' : ''; ?>">
                         <i class="fas fa-clipboard-check"></i>
                         <span class="nav-text">Trạng thái đơn hàng</span>

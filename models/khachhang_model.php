@@ -66,7 +66,7 @@ class CustomerModel {
             $account = $this->conn->prepare("INSERT INTO TaiKhoan (MaVaiTro, TenDangNhap, MatKhau, TrangThai) VALUES (1, :username, :password, 'Hoat dong')");
             $account->execute([
                 ':username' => $data['username'],
-                ':password' => $data['password']
+                ':password' => password_hash($data['password'], PASSWORD_DEFAULT)
             ]);
 
             $customer = $this->conn->prepare("INSERT INTO KhachHang (MaTaiKhoan, HoTen, SoDienThoai, Email, DiaChi) VALUES (:account_id, :name, :phone, :email, :address)");
@@ -100,7 +100,7 @@ class CustomerModel {
             $account = $this->conn->prepare("UPDATE TaiKhoan SET TenDangNhap = :username" . ($data['password'] !== '' ? ", MatKhau = :password" : '') . " WHERE MaTaiKhoan = :account_id");
             $accountData = [':username' => $data['username'], ':account_id' => $customer['MaTaiKhoan']];
             if ($data['password'] !== '') {
-                $accountData[':password'] = $data['password'];
+                $accountData[':password'] = password_hash($data['password'], PASSWORD_DEFAULT);
             }
             $account->execute($accountData);
 

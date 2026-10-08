@@ -27,10 +27,18 @@ class UserModel {
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Trong thực tế nên dùng password_hash và password_verify
-            // Ở đây vì dữ liệu mẫu trong db.sql là password plain-text '123456'
-            if ($password === $row['MatKhau']) {
+            $storedPassword = (string)$row['MatKhau'];
+            $passwordMatches = password_verify($password, $storedPassword)
+                || hash_equals($storedPassword, (string)$password);
+            if ($passwordMatches) {
                 if ($row['TrangThai'] === 'Hoat dong') {
+                    if (password_get_info($storedPassword)['algo'] === null) {
+                        $upgrade = $this->conn->prepare('UPDATE TaiKhoan SET MatKhau = :password WHERE MaTaiKhoan = :id');
+                        $upgrade->execute([
+                            ':password' => password_hash($password, PASSWORD_DEFAULT),
+                            ':id' => (int)$row['MaTaiKhoan'],
+                        ]);
+                    }
                     $this->MaTaiKhoan = $row['MaTaiKhoan'];
                     $this->MaVaiTro = $row['MaVaiTro'];
                     $this->TenDangNhap = $row['TenDangNhap'];

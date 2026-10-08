@@ -65,6 +65,18 @@ if ($page === 'dangnhap') {
         require_once 'controllers/thongke_controller.php';
         $controller = new StatisticController();
         $controller->index();
+    } elseif ($page === 'taikhoan') {
+        require_once 'controllers/taikhoan_controller.php';
+        $controller = new AccountController();
+        $controller->index();
+    } elseif ($page === 'nhanvien') {
+        require_once 'controllers/nhanvien_controller.php';
+        $controller = new EmployeeController();
+        $controller->index();
+    } elseif ($page === 'hoso') {
+        require_once 'controllers/hoso_controller.php';
+        $controller = new ProfileController();
+        $controller->index();
     } else {
         echo "404 Not Found";
     }

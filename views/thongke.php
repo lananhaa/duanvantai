@@ -28,12 +28,13 @@
     <div class="content-area">
         <div class="page-header">
             <div>
-                <h1 class="page-title">Thống kê giao hàng & Doanh thu</h1>
-                <p class="page-subtitle">Phân tích hiệu suất vận hành hệ thống</p>
+                <h1 class="page-title"><?php echo $type === 'revenue' ? 'Thống kê doanh thu' : 'Thống kê giao hàng'; ?></h1>
+                <p class="page-subtitle"><?php echo $type === 'revenue' ? 'Doanh thu phí vận chuyển của đơn đã hoàn tất trong kỳ' : 'Tình hình đơn hàng, tài xế và tuyến giao'; ?></p>
             </div>
             <div class="header-actions">
                 <form action="index.php" method="GET" style="display:flex;gap:8px;align-items:center;">
                     <input type="hidden" name="page" value="thongke">
+                    <input type="hidden" name="type" value="<?php echo htmlspecialchars($type); ?>">
                     <label style="font-size:13px;color:var(--text-secondary);">Từ:</label>
                     <input type="date" name="date_from" class="form-control" style="width:140px;" value="<?php echo htmlspecialchars($dateFrom); ?>">
                     <label style="font-size:13px;color:var(--text-secondary);">Đến:</label>
@@ -45,7 +46,13 @@
             </div>
         </div>
 
+        <nav style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border-color);">
+            <a href="index.php?page=thongke&type=delivery&date_from=<?php echo urlencode($dateFrom); ?>&date_to=<?php echo urlencode($dateTo); ?>" class="btn <?php echo $type === 'delivery' ? 'btn-primary' : 'btn-outline'; ?>">Thống kê giao hàng</a>
+            <a href="index.php?page=thongke&type=revenue&date_from=<?php echo urlencode($dateFrom); ?>&date_to=<?php echo urlencode($dateTo); ?>" class="btn <?php echo $type === 'revenue' ? 'btn-primary' : 'btn-outline'; ?>">Thống kê doanh thu</a>
+        </nav>
+
         <!-- KPI Cards -->
+        <?php if ($type === 'delivery'): ?>
         <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
             <div class="stat-card">
                 <div class="stat-icon" style="background:linear-gradient(135deg,#4361ee,#3a0ca3)"><i class="fas fa-box"></i></div>
@@ -75,9 +82,8 @@
             <div class="stat-card">
                 <div class="stat-icon" style="background:linear-gradient(135deg,#7b2ff7,#f107a3)"><i class="fas fa-money-bill-wave"></i></div>
                 <div class="stat-info">
-                    <p class="stat-label">Doanh thu</p>
-                    <h3 class="stat-value" style="font-size:18px;"><?php echo number_format($summary['TongDoanhThu'] ?? 0, 0, ',', '.'); ?>đ</h3>
-                    <small class="text-muted">Phí: <?php echo number_format($summary['DoanhThuPhi'] ?? 0, 0, ',', '.'); ?>đ</small>
+                    <p class="stat-label">Khối lượng hàng</p>
+                    <h3 class="stat-value" style="font-size:18px;"><?php echo number_format($summary['TongKhoiLuong'] ?? 0, 1, ',', '.'); ?> kg</h3>
                 </div>
             </div>
         </div>
@@ -97,26 +103,35 @@
                 <div class="stat-info"><p class="stat-label">COD không thu</p><h3 class="stat-value" style="font-size:18px;"><?php echo number_format($codStats['KhongThu'] ?? 0, 0, ',', '.'); ?>đ</h3></div>
             </div>
         </div>
+        <?php else: ?>
+        <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:24px;">
+            <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#06d6a0,#0aa372)"><i class="fas fa-money-bill-wave"></i></div><div class="stat-info"><p class="stat-label">Doanh thu phí vận chuyển</p><h3 class="stat-value" style="font-size:20px;"><?php echo number_format($revenueSummary['TongDoanhThu'] ?? 0, 0, ',', '.'); ?>đ</h3><small class="text-muted">Không bao gồm tiền hàng và COD</small></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#4361ee,#4895ef)"><i class="fas fa-box-check"></i></div><div class="stat-info"><p class="stat-label">Đơn hoàn tất trong kỳ</p><h3 class="stat-value"><?php echo number_format($revenueSummary['DonHoanTat'] ?? 0); ?></h3><small class="text-muted">Tính theo thời điểm hoàn tất giao hàng</small></div></div>
+        </div>
+        <?php endif; ?>
 
         <!-- Charts + Tables 2 cột -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
             <!-- Biểu đồ tròn trạng thái đơn -->
+            <?php if ($type === 'delivery'): ?>
             <div class="card">
                 <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-pie" style="color:#4361ee;"></i> Tỷ lệ đơn hàng</h3></div>
                 <div class="card-body" style="display:flex;justify-content:center;align-items:center;padding:20px;">
                     <canvas id="orderStatusChart" width="280" height="280"></canvas>
                 </div>
             </div>
+            <?php endif; ?>
 
-            <!-- Biểu đồ cột doanh thu 7 ngày -->
+            <!-- Biểu đồ theo loại báo cáo -->
             <div class="card">
-                <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-bar" style="color:#4361ee;"></i> Doanh thu 30 ngày gần nhất</h3></div>
+                <div class="card-header"><h3 class="card-title"><i class="fas fa-chart-bar" style="color:#4361ee;"></i> <?php echo $type === 'revenue' ? 'Doanh thu theo ngày hoàn tất' : 'Đơn hàng theo ngày tạo'; ?></h3></div>
                 <div class="card-body" style="padding:20px;">
                     <canvas id="revenueChart" height="260"></canvas>
                 </div>
             </div>
         </div>
 
+        <?php if ($type === 'delivery'): ?>
         <!-- Thống kê theo tài xế -->
         <div class="card" style="margin-bottom:20px;">
             <div class="card-header">
@@ -131,11 +146,10 @@
                             <th class="text-center">Hoàn tất</th>
                             <th class="text-center">Hủy</th>
                             <th class="text-center">Hoàn hàng</th>
-                            <th>Doanh thu</th>
                         </tr></thead>
                         <tbody>
                         <?php if (empty($driverStats)): ?>
-                            <tr><td colspan="8" class="text-center">Không có dữ liệu.</td></tr>
+                            <tr><td colspan="7" class="text-center">Không có dữ liệu.</td></tr>
                         <?php else: ?>
                         <?php foreach ($driverStats as $ds):
                             $cls = match($ds['TrangThaiTaiXe']) {
@@ -150,7 +164,6 @@
                                 <td class="text-center" style="color:#06d6a0;font-weight:600;"><?php echo (int)$ds['HoanTat']; ?></td>
                                 <td class="text-center" style="color:#dc3545;"><?php echo (int)$ds['DaHuy']; ?></td>
                                 <td class="text-center" style="color:#f77f00;"><?php echo (int)$ds['HoanHang']; ?></td>
-                                <td class="font-medium"><?php echo number_format($ds['DoanhThu'], 0, ',', '.'); ?>đ</td>
                             </tr>
                         <?php endforeach; endif; ?>
                         </tbody>
@@ -166,17 +179,16 @@
                 <div class="card-header"><h3 class="card-title"><i class="fas fa-route" style="color:#4361ee;"></i> Hiệu suất theo tuyến giao</h3></div>
                 <div class="card-body p-0">
                     <table class="table" style="margin:0;">
-                        <thead><tr><th>Tuyến</th><th class="text-center">Tổng</th><th class="text-center">Hoàn tất</th><th>Doanh thu</th></tr></thead>
+                        <thead><tr><th>Tuyến</th><th class="text-center">Tổng</th><th class="text-center">Hoàn tất</th></tr></thead>
                         <tbody>
                         <?php if (empty($routeStats)): ?>
-                            <tr><td colspan="4" class="text-center">Không có dữ liệu.</td></tr>
+                            <tr><td colspan="3" class="text-center">Không có dữ liệu.</td></tr>
                         <?php else: ?>
                         <?php foreach ($routeStats as $rs): ?>
                             <tr>
                                 <td style="font-size:13px;"><?php echo htmlspecialchars($rs['TenTuyen']); ?></td>
                                 <td class="text-center"><?php echo (int)$rs['TongDon']; ?></td>
                                 <td class="text-center" style="color:#06d6a0;font-weight:600;"><?php echo (int)$rs['HoanTat']; ?></td>
-                                <td style="font-size:13px;"><?php echo number_format($rs['DoanhThu'], 0, ',', '.'); ?>đ</td>
                             </tr>
                         <?php endforeach; endif; ?>
                         </tbody>
@@ -211,28 +223,35 @@
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Bảng theo ngày -->
         <div class="card">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-calendar-alt" style="color:#4361ee;"></i> Chi tiết theo ngày (30 ngày gần nhất)</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-calendar-alt" style="color:#4361ee;"></i> <?php echo $type === 'revenue' ? 'Doanh thu theo ngày hoàn tất (tối đa 30 ngày)' : 'Đơn hàng theo ngày tạo (tối đa 30 ngày)'; ?></h3></div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table">
-                        <thead><tr>
-                            <th>Ngày</th><th class="text-center">Tổng đơn</th><th class="text-center">Hoàn tất</th>
-                            <th class="text-center">Hủy</th><th>Doanh thu</th>
-                        </tr></thead>
-                        <tbody>
-                        <?php if (empty($dailyStats)): ?>
-                            <tr><td colspan="5" class="text-center">Không có dữ liệu trong khoảng thời gian này.</td></tr>
+                        <?php if ($type === 'revenue'): ?>
+                        <thead><tr><th>Ngày hoàn tất</th><th class="text-center">Đơn hoàn tất</th><th>Phí vận chuyển</th></tr></thead>
                         <?php else: ?>
-                        <?php foreach ($dailyStats as $day): ?>
+                        <thead><tr><th>Ngày tạo</th><th class="text-center">Tổng đơn</th><th class="text-center">Hoàn tất hiện tại</th><th class="text-center">Đã hủy hiện tại</th></tr></thead>
+                        <?php endif; ?>
+                        <tbody>
+                        <?php $rowsByDay = $type === 'revenue' ? $revenueDailyStats : $dailyStats; ?>
+                        <?php if (empty($rowsByDay)): ?>
+                            <tr><td colspan="<?php echo $type === 'revenue' ? 3 : 4; ?>" class="text-center">Không có dữ liệu trong khoảng thời gian này.</td></tr>
+                        <?php else: ?>
+                        <?php foreach ($rowsByDay as $day): ?>
                             <tr>
                                 <td class="font-medium"><?php echo date('d/m/Y', strtotime($day['Ngay'])); ?></td>
+                                <?php if ($type === 'revenue'): ?>
+                                <td class="text-center" style="color:#06d6a0;font-weight:600;"><?php echo (int)$day['HoanTat']; ?></td>
+                                <td class="font-medium"><?php echo number_format($day['DoanhThu'], 0, ',', '.'); ?>đ</td>
+                                <?php else: ?>
                                 <td class="text-center"><?php echo (int)$day['TongDon']; ?></td>
                                 <td class="text-center" style="color:#06d6a0;font-weight:600;"><?php echo (int)$day['HoanTat']; ?></td>
                                 <td class="text-center" style="color:#dc3545;"><?php echo (int)$day['DaHuy']; ?></td>
-                                <td class="font-medium"><?php echo number_format($day['DoanhThu'], 0, ',', '.'); ?>đ</td>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; endif; ?>
                         </tbody>
@@ -245,9 +264,10 @@
 
 <script src="assets/js/script.js"></script>
 <script>
-// Biểu đồ tròn
-const ctx1 = document.getElementById('orderStatusChart').getContext('2d');
-new Chart(ctx1, {
+const reportType = <?php echo json_encode($type); ?>;
+if (reportType === 'delivery') {
+    const ctx1 = document.getElementById('orderStatusChart').getContext('2d');
+    new Chart(ctx1, {
     type: 'doughnut',
     data: {
         labels: ['Hoàn tất', 'Đang xử lý', 'Đã hủy', 'Hoàn hàng'],
@@ -270,31 +290,38 @@ new Chart(ctx1, {
             legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 16 } }
         }
     }
-});
+    });
+}
 
-// Biểu đồ cột doanh thu
-const dailyData = <?php echo json_encode(array_reverse($dailyStats)); ?>;
+const dailyData = <?php echo json_encode(array_reverse($type === 'revenue' ? $revenueDailyStats : $dailyStats)); ?>;
 const ctx2 = document.getElementById('revenueChart').getContext('2d');
 new Chart(ctx2, {
     type: 'bar',
     data: {
         labels: dailyData.map(d => {
-            const dt = new Date(d.Ngay);
+            const dt = new Date(d.Ngay + 'T00:00:00');
             return dt.getDate() + '/' + (dt.getMonth()+1);
         }),
-        datasets: [{
-            label: 'Doanh thu (đ)',
-            data: dailyData.map(d => d.DoanhThu),
+        datasets: reportType === 'revenue' ? [{
+            label: 'Phí vận chuyển (đ)',
+            data: dailyData.map(d => Number(d.DoanhThu)),
+            backgroundColor: 'rgba(6,166,120,0.72)',
+            borderColor: '#07845f',
+            borderWidth: 1,
+            borderRadius: 4,
+        }] : [{
+            label: 'Đơn tạo',
+            data: dailyData.map(d => Number(d.TongDon)),
             backgroundColor: 'rgba(67,97,238,0.7)',
             borderColor: '#4361ee',
             borderWidth: 1,
             borderRadius: 4,
         }, {
-            label: 'Số đơn hoàn tất',
-            data: dailyData.map(d => d.HoanTat),
+            label: 'Hoàn tất hiện tại',
+            data: dailyData.map(d => Number(d.HoanTat)),
             type: 'line',
-            borderColor: '#06d6a0',
-            backgroundColor: 'rgba(6,214,160,0.1)',
+            borderColor: '#06a678',
+            backgroundColor: 'rgba(6,166,120,0.1)',
             borderWidth: 2,
             tension: 0.3,
             yAxisID: 'y1',
@@ -308,15 +335,17 @@ new Chart(ctx2, {
             tooltip: {
                 callbacks: {
                     label: function(ctx) {
-                        if (ctx.datasetIndex === 0) return 'Doanh thu: ' + Number(ctx.raw).toLocaleString('vi-VN') + 'đ';
-                        return 'Hoàn tất: ' + ctx.raw + ' đơn';
+                        if (reportType === 'revenue') return 'Phí vận chuyển: ' + Number(ctx.raw).toLocaleString('vi-VN') + 'đ';
+                        return ctx.dataset.label + ': ' + ctx.raw + ' đơn';
                     }
                 }
             }
         },
-        scales: {
-            y: { beginAtZero: true, ticks: { callback: v => (v/1000).toFixed(0)+'k đ', font: {size:11} } },
-            y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { font: {size:11} } }
+        scales: reportType === 'revenue' ? {
+            y: { beginAtZero: true, ticks: { callback: v => (v/1000).toFixed(0)+'k đ', font: {size:11} } }
+        } : {
+            y: { beginAtZero: true, ticks: { precision: 0 } },
+            y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { precision: 0 } }
         }
     }
 });

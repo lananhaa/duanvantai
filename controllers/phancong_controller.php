@@ -39,8 +39,6 @@ class AssignController {
                     $message     = 'Không tìm thấy thông tin nhân viên của bạn trong hệ thống.';
                     $messageType = 'error';
                 } else {
-                    // Admin có thể dùng MaNhanVien = 1 (mặc định) nếu không có bản ghi NhanVien
-                    if (!$maNhanVien) $maNhanVien = 1;
                     $result      = $this->model->assign($maDonHang, $maTaiXe, $maNhanVien, $ghiChu);
                     $message     = $result['message'];
                     $messageType = $result['success'] ? 'success' : 'error';

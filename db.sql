@@ -284,7 +284,7 @@ CREATE TABLE PhanCong (
     MaPhanCong INT AUTO_INCREMENT PRIMARY KEY,
     MaDonHang INT NOT NULL,
     MaTaiXe INT NOT NULL,
-    MaNhanVien INT NOT NULL,
+    MaNhanVien INT NULL,
 
     ThoiGianPhanCong DATETIME DEFAULT CURRENT_TIMESTAMP,
     TrangThai VARCHAR(30) DEFAULT 'Dang phan cong',

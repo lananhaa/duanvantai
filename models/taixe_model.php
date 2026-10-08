@@ -15,14 +15,15 @@ class DriverModel {
                          t.TenDangNhap,
                          pt.BienSo, pt.LoaiPhuongTien, pt.TaiTrong, pt.TrangThai AS TrangThaiXe,
                          (SELECT COUNT(*) FROM PhanCong pc WHERE pc.MaTaiXe = tx.MaTaiXe
-                          AND pc.TrangThai NOT IN ('Hoan thanh','Da huy','Hoan hang')) AS SoDonDangNhan
+                          AND pc.TrangThai NOT IN ('Hoan thanh','Da huy','Hoan hang','Hoan tat')) AS SoDonDangNhan
                   FROM TaiXe tx
                   INNER JOIN TaiKhoan t ON tx.MaTaiKhoan = t.MaTaiKhoan
                   LEFT JOIN PhuongTien pt ON tx.MaPhuongTien = pt.MaPhuongTien
                   WHERE 1=1";
         $params = [];
         if ($keyword !== '') {
-            $query .= " AND (tx.HoTen LIKE :kw OR tx.SoDienThoai LIKE :kw OR tx.KhuVucHienTai LIKE :kw OR t.TenDangNhap LIKE :kw OR pt.BienSo LIKE :kw)";
+            $query .= " AND (tx.HoTen LIKE :kw OR tx.SoDienThoai LIKE :kw OR tx.SoBangLai LIKE :kw
+                         OR tx.KhuVucHienTai LIKE :kw OR tx.DiaChi LIKE :kw OR t.TenDangNhap LIKE :kw OR pt.BienSo LIKE :kw)";
             $params[':kw'] = '%' . $keyword . '%';
         }
         if ($status !== '') {
@@ -96,6 +97,12 @@ class DriverModel {
     public function update($id, $data) {
         $driver = $this->getById($id);
         if (!$driver) return ['success' => false, 'message' => 'Không tìm thấy tài xế.'];
+        $activeAssignments = $this->conn->prepare("SELECT COUNT(*) FROM PhanCong
+            WHERE MaTaiXe = :id AND TrangThai NOT IN ('Hoan thanh', 'Da huy', 'Hoan hang', 'Hoan tat')");
+        $activeAssignments->execute([':id' => (int)$id]);
+        if ((int)$activeAssignments->fetchColumn() > 0 && $data['status'] !== 'Dang giao') {
+            return ['success' => false, 'message' => 'Tài xế đang phụ trách đơn hàng; chỉ có thể đổi trạng thái sau khi hoàn tất hoặc hủy phân công.'];
+        }
         if ($this->usernameExists($data['username'], $driver['MaTaiKhoan'])) {
             return ['success' => false, 'message' => 'Tên đăng nhập đã tồn tại.'];
         }

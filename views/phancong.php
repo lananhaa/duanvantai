@@ -260,13 +260,19 @@
                             <div class="driver-grid">
                                 <?php foreach ($drivers as $d):
                                     $isBusy    = $d['TrangThai'] === 'Dang giao';
-                                    $isOffline = $d['TrangThai'] === 'Nghi';
+                                    $isOffline = $d['TrangThai'] === 'Nghi'
+                                        || $d['TrangThaiTaiKhoan'] !== 'Hoat dong'
+                                        || !$d['MaPhuongTien']
+                                        || $d['TrangThaiXe'] === 'Bao tri';
                                     $cardClass = $isBusy ? 'busy' : ($isOffline ? 'offline' : '');
                                     $badgeClass= $isBusy ? 'badge-busy' : ($isOffline ? 'badge-offline' : 'badge-available');
-                                    $badgeText = $isBusy ? 'Đang giao' : ($isOffline ? 'Nghỉ' : 'Sẵn sàng');
+                                    $badgeText = $isBusy ? 'Đang giao' : ($isOffline
+                                        ? ($d['TrangThai'] === 'Nghi' ? 'Nghỉ' : (!$d['MaPhuongTien'] ? 'Chưa có xe' : ($d['TrangThaiXe'] === 'Bao tri' ? 'Xe bảo trì' : 'Tài khoản khóa')))
+                                        : 'Sẵn sàng');
                                 ?>
                                 <div class="driver-card <?php echo $cardClass; ?>"
                                      data-driver-id="<?php echo $d['MaTaiXe']; ?>"
+                                      data-driver-selectable="<?php echo ($isBusy || $isOffline) ? '0' : '1'; ?>"
                                      data-driver-name="<?php echo htmlspecialchars($d['HoTen']); ?>"
                                      data-driver-vehicle="<?php echo htmlspecialchars($d['BienSo'] ?? ''); ?>"
                                      data-driver-tai-trong="<?php echo $d['TaiTrong'] ?? 0; ?>"
@@ -377,6 +383,27 @@
             document.getElementById('hiddenOrderId').value = selectedOrderId;
 
             const info = JSON.parse(this.dataset.orderInfo);
+                const orderWeight = parseFloat(info.klg) || 0;
+                document.querySelectorAll('.driver-card').forEach(card => {
+                    const exceedsCapacity = parseFloat(card.dataset.driverTaiTrong) < orderWeight;
+                    card.classList.toggle('offline', exceedsCapacity || card.dataset.driverSelectable !== '1');
+                    if (card.dataset.driverSelectable === '1') {
+                        const badge = card.querySelector('.driver-badge');
+                        badge.textContent = exceedsCapacity ? 'Không đủ tải trọng' : 'Sẵn sàng';
+                        badge.classList.toggle('badge-offline', exceedsCapacity);
+                        badge.classList.toggle('badge-available', !exceedsCapacity);
+                    }
+                });
+                if (selectedDriverId) {
+                    const selectedCard = document.querySelector(`.driver-card[data-driver-id="${selectedDriverId}"]`);
+                    if (!selectedCard || parseFloat(selectedCard.dataset.driverTaiTrong) < orderWeight) {
+                        if (selectedCard) selectedCard.classList.remove('selected');
+                        selectedDriverId = null;
+                        document.getElementById('hiddenDriverId').value = '';
+                        document.getElementById('driverSummary').classList.add('empty');
+                        document.getElementById('driverSummary').innerHTML = '<i class="fas fa-mouse-pointer"></i> Nhấp vào thẻ tài xế để chọn';
+                    }
+                }
             document.getElementById('orderSummary').classList.remove('empty');
             document.getElementById('orderSummary').innerHTML = `
                 <strong>Đơn #${info.id}</strong><br>
@@ -394,6 +421,14 @@
 
     // ─── Chọn tài xế
     function selectDriver(card) {
+        const selectedOrderRow = selectedOrderId
+            ? document.querySelector(`.order-row[data-order-id="${selectedOrderId}"]`)
+            : null;
+        const selectedOrderInfo = selectedOrderRow ? JSON.parse(selectedOrderRow.dataset.orderInfo) : null;
+        if (card.dataset.driverSelectable !== '1'
+            || (selectedOrderInfo && parseFloat(card.dataset.driverTaiTrong) < (parseFloat(selectedOrderInfo.klg) || 0))) {
+            return;
+        }
         document.querySelectorAll('.driver-card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
         selectedDriverId = card.dataset.driverId;

@@ -16,7 +16,8 @@ class LocationModel {
                   FROM DiemNhan dn WHERE 1=1";
         $params = [];
         if ($keyword !== '') {
-            $query .= " AND (dn.DiaChi LIKE :kw OR dn.KhuVuc LIKE :kw OR dn.TinhThanh LIKE :kw OR dn.SoDienThoai LIKE :kw)";
+            $query .= " AND (dn.DiaChi LIKE :kw OR dn.KhuVuc LIKE :kw OR dn.TinhThanh LIKE :kw
+                         OR dn.QuanHuyen LIKE :kw OR dn.PhuongXa LIKE :kw OR dn.SoDienThoai LIKE :kw OR dn.GhiChu LIKE :kw)";
             $params[':kw'] = '%' . $keyword . '%';
         }
         $query .= " ORDER BY dn.MaDiemNhan DESC";
@@ -77,7 +78,9 @@ class LocationModel {
                   FROM DiemGiao dg WHERE 1=1";
         $params = [];
         if ($keyword !== '') {
-            $query .= " AND (dg.TenNguoiNhan LIKE :kw OR dg.DiaChi LIKE :kw OR dg.KhuVuc LIKE :kw OR dg.SoDienThoai LIKE :kw)";
+            $query .= " AND (dg.TenNguoiNhan LIKE :kw OR dg.DiaChi LIKE :kw OR dg.KhuVuc LIKE :kw
+                         OR dg.TinhThanh LIKE :kw OR dg.QuanHuyen LIKE :kw OR dg.PhuongXa LIKE :kw
+                         OR dg.SoDienThoai LIKE :kw OR dg.GhiChu LIKE :kw)";
             $params[':kw'] = '%' . $keyword . '%';
         }
         $query .= " ORDER BY dg.MaDiemGiao DESC";

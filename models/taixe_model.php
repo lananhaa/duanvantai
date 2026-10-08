@@ -137,6 +137,13 @@ class DriverModel {
     public function delete($id) {
         $driver = $this->getById($id);
         if (!$driver) return ['success' => false, 'message' => 'Không tìm thấy tài xế.'];
+
+        $assignmentCount = $this->conn->prepare("SELECT COUNT(*) FROM PhanCong WHERE MaTaiXe = :id");
+        $assignmentCount->execute([':id' => (int)$id]);
+        if ((int)$assignmentCount->fetchColumn() > 0) {
+            return ['success' => false, 'message' => 'Không thể xóa tài xế vì đang có đơn hàng hoặc phân công đang hoạt động.'];
+        }
+
         try {
             $this->conn->beginTransaction();
             $this->conn->prepare("DELETE FROM TaiXe WHERE MaTaiXe = :id")->execute([':id' => (int)$id]);

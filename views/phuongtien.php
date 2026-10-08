@@ -15,6 +15,7 @@
         <div class="search-bar">
             <form action="index.php" method="GET" style="display:flex;width:100%;">
                 <input type="hidden" name="page" value="phuongtien">
+                <?php if (!empty($_GET['status'])): ?><input type="hidden" name="status" value="<?php echo htmlspecialchars($_GET['status']); ?>"><?php endif; ?>
                 <i class="fas fa-search search-icon"></i>
                 <input type="text" name="keyword" placeholder="Tìm biển số, loại phương tiện..." value="<?php echo htmlspecialchars($_GET['keyword'] ?? ''); ?>">
             </form>

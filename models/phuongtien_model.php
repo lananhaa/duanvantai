@@ -83,11 +83,20 @@ class VehicleModel {
     }
 
     public function delete($id) {
+        $vehicle = $this->getById($id);
+        if (!$vehicle) return ['success' => false, 'message' => 'Không tìm thấy phương tiện.'];
+
+        $inUse = $this->conn->prepare("SELECT COUNT(*) FROM TaiXe WHERE MaPhuongTien = :id");
+        $inUse->execute([':id' => (int)$id]);
+        if ((int)$inUse->fetchColumn() > 0) {
+            return ['success' => false, 'message' => 'Không thể xóa phương tiện đang được gán cho tài xế.'];
+        }
+
         try {
             $this->conn->prepare("DELETE FROM PhuongTien WHERE MaPhuongTien = :id")->execute([':id' => (int)$id]);
             return ['success' => true, 'message' => 'Xóa phương tiện thành công.'];
         } catch (PDOException $e) {
-            return ['success' => false, 'message' => 'Không thể xóa phương tiện đang được sử dụng bởi tài xế.'];
+            return ['success' => false, 'message' => 'Không thể xóa phương tiện hiện đang được sử dụng.'];
         }
     }
 }

@@ -69,7 +69,7 @@ class DriverModel {
         try {
             $this->conn->beginTransaction();
             $acc = $this->conn->prepare("INSERT INTO TaiKhoan (MaVaiTro, TenDangNhap, MatKhau, TrangThai) VALUES (3, :u, :p, 'Hoat dong')");
-            $acc->execute([':u' => $data['username'], ':p' => $data['password']]);
+            $acc->execute([':u' => $data['username'], ':p' => password_hash($data['password'], PASSWORD_DEFAULT)]);
             $accountId = $this->conn->lastInsertId();
 
             $tx = $this->conn->prepare(
@@ -103,7 +103,7 @@ class DriverModel {
             $this->conn->beginTransaction();
             $accSql = "UPDATE TaiKhoan SET TenDangNhap = :u" . ($data['password'] !== '' ? ", MatKhau = :p" : '') . " WHERE MaTaiKhoan = :aid";
             $accData = [':u' => $data['username'], ':aid' => $driver['MaTaiKhoan']];
-            if ($data['password'] !== '') $accData[':p'] = $data['password'];
+            if ($data['password'] !== '') $accData[':p'] = password_hash($data['password'], PASSWORD_DEFAULT);
             $this->conn->prepare($accSql)->execute($accData);
 
             $this->conn->prepare(

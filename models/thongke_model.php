@@ -21,11 +21,28 @@ class StatisticModel {
                 COUNT(CASE WHEN d.TrangThai = 'Da huy' THEN 1 END) AS DonHuy,
                 COUNT(CASE WHEN d.TrangThai = 'Hoan hang' THEN 1 END) AS DonHoanHang,
                 COUNT(CASE WHEN d.TrangThai NOT IN ('Hoan tat','Da huy','Hoan hang') THEN 1 END) AS DangXuLy,
-                COALESCE(SUM(CASE WHEN d.TrangThai = 'Hoan tat' THEN d.PhiVanChuyen ELSE 0 END), 0) AS DoanhThuPhi,
-                COALESCE(SUM(CASE WHEN d.TrangThai = 'Hoan tat' THEN d.TienHang ELSE 0 END), 0) AS DoanhThuHang,
-                COALESCE(SUM(CASE WHEN d.TrangThai = 'Hoan tat' THEN d.TongPhi ELSE 0 END), 0) AS TongDoanhThu,
                 COALESCE(SUM(d.TongKhoiLuong), 0) AS TongKhoiLuong
              FROM DonHang d WHERE 1=1 $where"
+        );
+        $stmt->execute($params);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getRevenueSummaryStats($dateFrom = '', $dateTo = '') {
+        $where = $this->buildDateWhere('completed.ThoiGian', $dateFrom, $dateTo);
+        $params = $this->buildDateParams($dateFrom, $dateTo);
+        $stmt = $this->conn->prepare(
+            "SELECT COUNT(*) AS DonHoanTat,
+                    COALESCE(SUM(d.PhiVanChuyen), 0) AS DoanhThuPhi,
+                    COALESCE(SUM(d.PhiVanChuyen), 0) AS TongDoanhThu
+             FROM DonHang d
+             INNER JOIN (
+                 SELECT MaDonHang, MAX(ThoiGian) AS ThoiGian
+                 FROM LichSuTrangThai
+                 WHERE TrangThai = 'Hoan tat'
+                 GROUP BY MaDonHang
+             ) completed ON completed.MaDonHang = d.MaDonHang
+             WHERE 1=1 $where"
         );
         $stmt->execute($params);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -39,10 +56,31 @@ class StatisticModel {
             "SELECT DATE(d.NgayTao) AS Ngay,
                     COUNT(*) AS TongDon,
                     COUNT(CASE WHEN d.TrangThai = 'Hoan tat' THEN 1 END) AS HoanTat,
-                    COUNT(CASE WHEN d.TrangThai = 'Da huy' THEN 1 END) AS DaHuy,
-                    COALESCE(SUM(CASE WHEN d.TrangThai = 'Hoan tat' THEN d.TongPhi ELSE 0 END), 0) AS DoanhThu
+                    COUNT(CASE WHEN d.TrangThai = 'Da huy' THEN 1 END) AS DaHuy
              FROM DonHang d WHERE 1=1 $where
              GROUP BY DATE(d.NgayTao)
+             ORDER BY Ngay DESC LIMIT 30"
+        );
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getRevenueDailyStats($dateFrom = '', $dateTo = '') {
+        $where = $this->buildDateWhere('completed.ThoiGian', $dateFrom, $dateTo);
+        $params = $this->buildDateParams($dateFrom, $dateTo);
+        $stmt = $this->conn->prepare(
+            "SELECT DATE(completed.ThoiGian) AS Ngay,
+                    COUNT(*) AS HoanTat,
+                    COALESCE(SUM(d.PhiVanChuyen), 0) AS DoanhThu
+             FROM DonHang d
+             INNER JOIN (
+                 SELECT MaDonHang, MAX(ThoiGian) AS ThoiGian
+                 FROM LichSuTrangThai
+                 WHERE TrangThai = 'Hoan tat'
+                 GROUP BY MaDonHang
+             ) completed ON completed.MaDonHang = d.MaDonHang
+             WHERE 1=1 $where
+             GROUP BY DATE(completed.ThoiGian)
              ORDER BY Ngay DESC LIMIT 30"
         );
         $stmt->execute($params);
@@ -61,8 +99,7 @@ class StatisticModel {
                     COUNT(pc.MaPhanCong) AS TongPhanCong,
                     COUNT(CASE WHEN d.TrangThai = 'Hoan tat' THEN 1 END) AS HoanTat,
                     COUNT(CASE WHEN d.TrangThai = 'Da huy' THEN 1 END) AS DaHuy,
-                    COUNT(CASE WHEN d.TrangThai = 'Hoan hang' THEN 1 END) AS HoanHang,
-                    COALESCE(SUM(CASE WHEN d.TrangThai = 'Hoan tat' THEN d.TongPhi ELSE 0 END), 0) AS DoanhThu
+                    COUNT(CASE WHEN d.TrangThai = 'Hoan hang' THEN 1 END) AS HoanHang
              FROM TaiXe tx
              LEFT JOIN PhanCong pc ON pc.MaTaiXe = tx.MaTaiXe
              LEFT JOIN DonHang d ON d.MaDonHang = pc.MaDonHang
@@ -81,8 +118,7 @@ class StatisticModel {
         $stmt = $this->conn->prepare(
             "SELECT tn.MaTuyenGiao, tn.TenTuyen, tn.KhuVucDi, tn.KhuVucDen,
                     COUNT(d.MaDonHang) AS TongDon,
-                    COUNT(CASE WHEN d.TrangThai = 'Hoan tat' THEN 1 END) AS HoanTat,
-                    COALESCE(SUM(CASE WHEN d.TrangThai = 'Hoan tat' THEN d.TongPhi ELSE 0 END), 0) AS DoanhThu
+                    COUNT(CASE WHEN d.TrangThai = 'Hoan tat' THEN 1 END) AS HoanTat
              FROM TuyenGiao tn
              LEFT JOIN DonHang d ON d.MaTuyenGiao = tn.MaTuyenGiao
              WHERE 1=1 $where

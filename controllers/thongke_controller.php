@@ -10,12 +10,26 @@ class StatisticController {
         }
 
         $model    = new StatisticModel();
-        $dateFrom = trim($_GET['date_from'] ?? date('Y-m-01')); // Mặc định đầu tháng hiện tại
-        $dateTo   = trim($_GET['date_to']   ?? date('Y-m-d'));  // Mặc định hôm nay
-        $type     = trim($_GET['type'] ?? 'delivery');           // 'delivery' | 'revenue'
+        $dateFrom = trim($_GET['date_from'] ?? date('Y-m-01'));
+        $dateTo   = trim($_GET['date_to'] ?? date('Y-m-d'));
+        $type     = in_array($_GET['type'] ?? 'delivery', ['delivery', 'revenue'], true)
+            ? $_GET['type'] ?? 'delivery'
+            : 'delivery';
+
+        foreach (['dateFrom', 'dateTo'] as $dateField) {
+            $date = DateTime::createFromFormat('!Y-m-d', $$dateField);
+            if (!$date || $date->format('Y-m-d') !== $$dateField) {
+                $$dateField = $dateField === 'dateFrom' ? date('Y-m-01') : date('Y-m-d');
+            }
+        }
+        if ($dateFrom > $dateTo) {
+            [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
+        }
 
         $summary       = $model->getSummaryStats($dateFrom, $dateTo);
+        $revenueSummary = $model->getRevenueSummaryStats($dateFrom, $dateTo);
         $dailyStats    = $model->getDailyStats($dateFrom, $dateTo);
+        $revenueDailyStats = $model->getRevenueDailyStats($dateFrom, $dateTo);
         $driverStats   = $model->getDriverStats($dateFrom, $dateTo);
         $routeStats    = $model->getRouteStats($dateFrom, $dateTo);
         $codStats      = $model->getCodStats($dateFrom, $dateTo);

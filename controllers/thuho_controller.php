@@ -36,8 +36,19 @@ class CodController {
         $status    = trim($_GET['status'] ?? '');
         $dateFrom  = trim($_GET['date_from'] ?? '');
         $dateTo    = trim($_GET['date_to'] ?? '');
+        foreach (['dateFrom', 'dateTo'] as $dateField) {
+            if ($$dateField !== '') {
+                $date = DateTime::createFromFormat('!Y-m-d', $$dateField);
+                if (!$date || $date->format('Y-m-d') !== $$dateField) {
+                    $$dateField = '';
+                }
+            }
+        }
+        if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
+            [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
+        }
         $cods      = $model->getAll($keyword, $status, $dateFrom, $dateTo);
-        $summary   = $model->getSummary();
+        $summary   = $model->getSummary($dateFrom, $dateTo);
 
         require_once 'views/thuho.php';
     }

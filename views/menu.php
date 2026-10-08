@@ -48,12 +48,14 @@
                         <span class="nav-text">Tra cứu đơn hàng</span>
                     </a>
                 </li>
+                <?php if (in_array($sidebarRole, [2, 4], true)): ?>
                 <li class="nav-item">
                     <a href="index.php?page=thuho" class="nav-link <?php echo $activePage === 'thuho' ? 'active' : ''; ?>">
                         <i class="fas fa-money-bill-wave"></i>
                         <span class="nav-text">Quản lý COD</span>
                     </a>
                 </li>
+                <?php endif; ?>
 
                 <li class="nav-title">Nghiệp vụ Vận tải</li>
                 <li class="nav-item">
@@ -90,17 +92,34 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="index.php?page=hoso" class="nav-link <?php echo $activePage === 'hoso' ? 'active' : ''; ?>">
+                        <i class="fas fa-user-circle"></i>
+                        <span class="nav-text">Hồ sơ cá nhân</span>
+                    </a>
+                </li>
+                <?php if (in_array($sidebarRole, [2, 4], true)): ?>
+                <li class="nav-item">
                     <a href="index.php?page=thongke" class="nav-link <?php echo $activePage === 'thongke' ? 'active' : ''; ?>">
                         <i class="fas fa-chart-line"></i>
-                        <span class="nav-text">Thống kê & Báo cáo</span>
+                        <span class="nav-text">Thống kê giao hàng / doanh thu</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+                <?php if ($sidebarRole === 4): ?>
+                <li class="nav-title">Quản trị hệ thống</li>
+                <li class="nav-item">
+                    <a href="index.php?page=taikhoan" class="nav-link <?php echo $activePage === 'taikhoan' ? 'active' : ''; ?>">
+                        <i class="fas fa-user-lock"></i>
+                        <span class="nav-text">Quản lý tài khoản</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="index.php?page=phanquyen" class="nav-link <?php echo $activePage === 'phanquyen' ? 'active' : ''; ?>">
-                        <i class="fas fa-shield-alt"></i>
-                        <span class="nav-text">Phân quyền chức năng</span>
+                    <a href="index.php?page=nhanvien" class="nav-link <?php echo $activePage === 'nhanvien' ? 'active' : ''; ?>">
+                        <i class="fas fa-user-tie"></i>
+                        <span class="nav-text">Quản lý nhân viên</span>
                     </a>
                 </li>
+                <?php endif; ?>
             </ul>
         </div>
         
@@ -112,8 +131,8 @@
                 <h4 class="name"><?php echo htmlspecialchars($_SESSION['username'] ?? 'Khách'); ?></h4>
                 <p class="role">
                     <?php 
-                        $roleId = $_SESSION['role_id'] ?? 0;
-                        switch($roleId) {
+                        $displayRoleId = $_SESSION['role_id'] ?? 0;
+                        switch($displayRoleId) {
                             case 1: echo 'Khách hàng'; break;
                             case 2: echo 'Điều phối'; break;
                             case 3: echo 'Tài xế'; break;

@@ -135,7 +135,11 @@
                                 <td><?php echo $c['ThoiGianThu'] ? date('d/m/Y H:i', strtotime($c['ThoiGianThu'])) : '<span class="text-muted">—</span>'; ?></td>
                                 <td class="text-center">
                                     <button class="btn btn-outline" style="padding:4px 10px;font-size:12px;"
-                                        onclick="openCodModal(<?php echo $c['MaCOD']; ?>, '<?php echo htmlspecialchars($c['TrangThaiCOD'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($c['GhiChu'] ?? '', ENT_QUOTES); ?>', <?php echo $c['MaDonHang']; ?>)">
+                                        data-cod-id="<?php echo $c['MaCOD']; ?>"
+                                        data-status="<?php echo htmlspecialchars($c['TrangThaiCOD'], ENT_QUOTES); ?>"
+                                        data-note="<?php echo htmlspecialchars($c['GhiChu'] ?? '', ENT_QUOTES); ?>"
+                                        data-order-id="<?php echo $c['MaDonHang']; ?>"
+                                        onclick="openCodModal(this)">
                                         <i class="fas fa-edit"></i> Cập nhật
                                     </button>
                                 </td>
@@ -181,17 +185,25 @@
 
 <script src="assets/js/script.js"></script>
 <script>
-function openCodModal(codId, status, note, orderId) {
-    document.getElementById('codModal').setAttribute('aria-hidden','false');
+function openCodModal(btn) {
+    var codId = btn.getAttribute('data-cod-id');
+    var status = btn.getAttribute('data-status');
+    var note = btn.getAttribute('data-note');
+    var orderId = btn.getAttribute('data-order-id');
+    var modal = document.getElementById('codModal');
+    modal.setAttribute('aria-hidden','false');
+    modal.classList.add('is-open');
     document.getElementById('codUpdateId').value      = codId;
     document.getElementById('codModalSubtitle').textContent = 'Đơn hàng #' + orderId;
     document.getElementById('codStatusSelect').value  = status || 'Chua thu';
     document.getElementById('codNote').value          = note || '';
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
 }
 function closeCodModal() {
-    document.getElementById('codModal').setAttribute('aria-hidden','true');
-    document.body.style.overflow = '';
+    var modal = document.getElementById('codModal');
+    modal.setAttribute('aria-hidden','true');
+    modal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
 }
 </script>
 </body>

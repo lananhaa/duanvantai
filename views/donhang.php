@@ -38,7 +38,7 @@ $editDetail = $editOrder['detail'] ?? [];
         <div class="content-area">
             <div class="page-header">
                 <div><h1 class="page-title">Quản lý đơn hàng</h1><p class="page-subtitle">Tạo, theo dõi và xử lý toàn bộ đơn vận chuyển</p></div>
-                <div class="header-actions"><button class="btn btn-primary" type="button" data-order-modal="create"><i class="fas fa-plus"></i> Tạo đơn hàng</button></div>
+                <div class="header-actions"><a class="btn btn-primary" href="index.php?page=taodonhang"><i class="fas fa-plus"></i> Tạo đơn hàng</a></div>
             </div>
             <?php if ($message !== ''): ?><div class="alert-message <?php echo $messageType; ?>"><?php echo htmlspecialchars($message); ?></div><?php endif; ?>
             <div class="card order-filter-card">

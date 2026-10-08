@@ -39,15 +39,10 @@
                 <li class="nav-item">
                     <a href="index.php?page=donhangtaixe" class="nav-link <?php echo in_array($activePage, ['donhangtaixe', 'donhangtaixe'], true) ? 'active' : ''; ?>">
                         <i class="fas fa-clipboard-check"></i>
-                        <span class="nav-text">Đơn hàng phân công cho tài xế</span>
+                        <span class="nav-text">Trạng thái đơn hàng</span>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="index.php?page=donhang" class="nav-link">
-                        <i class="fas fa-search"></i>
-                        <span class="nav-text">Tra cứu đơn hàng</span>
-                    </a>
-                </li>
+            
                 <?php if (in_array($sidebarRole, [2, 4], true)): ?>
                 <li class="nav-item">
                     <a href="index.php?page=thuho" class="nav-link <?php echo $activePage === 'thuho' ? 'active' : ''; ?>">

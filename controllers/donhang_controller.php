@@ -145,5 +145,19 @@ class OrderController {
 
         require_once 'views/donhang.php';
     }
+
+    public function create() {
+        $role = (int) ($_SESSION['role_id'] ?? 0);
+        if (!in_array($role, [1, 2, 4], true)) {
+            echo 'Bạn không có quyền truy cập trang này.';
+            exit;
+        }
+
+        $orderModel = new OrderModel();
+        $customerId = $role === 1 ? $orderModel->getCustomerIdByAccount($_SESSION['user_id'] ?? 0) : null;
+        $options = $orderModel->getFormOptions($customerId);
+
+        require_once 'views/taodonhang.php';
+    }
 }
 ?>

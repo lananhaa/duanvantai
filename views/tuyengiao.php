@@ -7,6 +7,111 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    /* CSS điều khiển hiển thị Modal Popup */
+    .customer-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.2s ease-in-out;
+    }
+    .customer-modal[aria-hidden="false"] {
+        visibility: visible;
+        opacity: 1;
+    }
+    .customer-modal-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(3px);
+    }
+    .customer-modal-dialog {
+        position: relative;
+        background: #ffffff;
+        width: 90%;
+        max-width: 620px;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        overflow: hidden;
+    }
+    .customer-modal-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .customer-modal-header h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+    }
+    .customer-modal-header p {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 2px 0 0 0;
+    }
+    .modal-close {
+        background: transparent;
+        border: none;
+        font-size: 1.2rem;
+        color: #94a3b8;
+        cursor: pointer;
+    }
+    .customer-form-grid {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+    .customer-form-wide {
+        grid-column: span 2;
+    }
+    .input-group label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #334155;
+        margin-bottom: 4px;
+    }
+    .input-group label span {
+        color: #ef4444;
+    }
+    .input-group input, .input-group select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        outline: none;
+        box-sizing: border-box;
+    }
+    .input-group input:focus, .input-group select:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+    .customer-modal-footer {
+        padding: 14px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    </style>
 </head>
 <body class="dashboard-body">
 <?php include 'views/menu.php'; ?>
@@ -35,23 +140,23 @@
                 <p class="page-subtitle">Thiết lập tuyến đường và bảng phí vận chuyển</p>
             </div>
             <div class="header-actions">
-                <?php if ($tab === 'tuyengiao'): ?>
-                <button class="btn btn-primary" onclick="openRouteModal()"><i class="fas fa-plus"></i> Thêm tuyến</button>
+                <?php if ($tab === 'tuyengiao' || $tab === 'routes'): ?>
+                <button type="button" class="btn btn-primary" onclick="openRouteModal()"><i class="fas fa-plus"></i> Thêm tuyến</button>
                 <?php else: ?>
-                <button class="btn btn-primary" onclick="openFeeModal()"><i class="fas fa-plus"></i> Thêm mức phí</button>
+                <button type="button" class="btn btn-primary" onclick="openFeeModal()"><i class="fas fa-plus"></i> Thêm mức phí</button>
                 <?php endif; ?>
             </div>
         </div>
 
-        <?php if ($message !== ''): ?>
+        <?php if (!empty($message)): ?>
         <div class="alert-message <?php echo $messageType; ?>"><?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
 
         <!-- Tab nav -->
         <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border-color);padding-bottom:0;">
-            <a href="index.php?page=tuyengiao&tab=routes&keyword=<?php echo urlencode($_GET['keyword'] ?? ''); ?>"
+            <a href="index.php?page=tuyengiao&tab=tuyengiao&keyword=<?php echo urlencode($_GET['keyword'] ?? ''); ?>"
                style="padding:10px 20px;font-weight:600;border-radius:6px 6px 0 0;text-decoration:none;
-                      <?php echo $tab === 'tuyengiao' ? 'background:var(--primary);color:#fff;' : 'color:var(--text-secondary);'; ?>">
+                      <?php echo ($tab === 'tuyengiao' || $tab === 'routes') ? 'background:var(--primary);color:#fff;' : 'color:var(--text-secondary);'; ?>">
                 <i class="fas fa-route"></i> Tuyến giao (<?php echo count($routes); ?>)
             </a>
             <a href="index.php?page=tuyengiao&tab=fees&keyword=<?php echo urlencode($_GET['keyword'] ?? ''); ?>"
@@ -61,7 +166,7 @@
             </a>
         </div>
 
-        <?php if ($tab === 'tuyengiao'): ?>
+        <?php if ($tab === 'tuyengiao' || $tab === 'routes'): ?>
         <!-- TUYẾN GIAO -->
         <div class="card">
             <div class="card-body p-0">
@@ -85,8 +190,8 @@
                                 <td class="text-center"><?php echo (int)$r['SoMucPhi']; ?></td>
                                 <td><?php echo htmlspecialchars($r['MoTa'] ?? ''); ?></td>
                                 <td class="text-center">
-                                    <button class="btn-icon text-primary" onclick="openRouteModal(<?php echo htmlspecialchars(json_encode($r), ENT_QUOTES); ?>)"><i class="fas fa-edit"></i></button>
-                                    <a href="index.php?page=tuyengiao&action=delete_route&id=<?php echo $r['MaTuyenGiao']; ?>&tab=routes"
+                                    <button type="button" class="btn-icon text-primary" onclick='openRouteModal(<?php echo json_encode($r, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)'><i class="fas fa-edit"></i></button>
+                                    <a href="index.php?page=tuyengiao&action=delete_route&id=<?php echo $r['MaTuyenGiao']; ?>&tab=tuyengiao"
                                        class="btn-icon text-danger" onclick="return confirm('Xóa tuyến <?php echo htmlspecialchars($r['TenTuyen'], ENT_QUOTES); ?>?')"><i class="fas fa-trash-alt"></i></a>
                                 </td>
                             </tr>
@@ -140,7 +245,7 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn-icon text-primary" onclick="openFeeModal(<?php echo htmlspecialchars(json_encode($f), ENT_QUOTES); ?>)"><i class="fas fa-edit"></i></button>
+                                    <button type="button" class="btn-icon text-primary" onclick='openFeeModal(<?php echo json_encode($f, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)'><i class="fas fa-edit"></i></button>
                                     <a href="index.php?page=tuyengiao&action=delete_fee&id=<?php echo $f['MaPhi']; ?>&tab=fees"
                                        class="btn-icon text-danger" onclick="return confirm('Xóa mức phí này?')"><i class="fas fa-trash-alt"></i></a>
                                 </td>
@@ -214,18 +319,19 @@
     </section>
 </div>
 
-<script src="assets/js/script.js"></script>
 <script>
 function openRouteModal(data) {
-    const m = document.getElementById('routeModal');
-    m.setAttribute('aria-hidden','false');
+    var m = document.getElementById('routeModal');
+    if (!m) return;
+    
+    m.setAttribute('aria-hidden', 'false');
     if (data) {
         document.getElementById('routeModalTitle').textContent = 'Sửa tuyến giao';
-        document.getElementById('routeId').value  = data.MaTuyenGiao;
-        document.getElementById('routeTen').value = data.TenTuyen || '';
-        document.getElementById('routeDi').value  = data.KhuVucDi || '';
-        document.getElementById('routeDen').value = data.KhuVucDen || '';
-        document.getElementById('routeMoTa').value= data.MoTa || '';
+        document.getElementById('routeId').value   = data.MaTuyenGiao || '';
+        document.getElementById('routeTen').value  = data.TenTuyen || '';
+        document.getElementById('routeDi').value   = data.KhuVucDi || '';
+        document.getElementById('routeDen').value  = data.KhuVucDen || '';
+        document.getElementById('routeMoTa').value = data.MoTa || '';
     } else {
         document.getElementById('routeModalTitle').textContent = 'Thêm tuyến giao';
         document.getElementById('routeForm').reset();
@@ -233,22 +339,29 @@ function openRouteModal(data) {
     }
     document.body.style.overflow = 'hidden';
 }
-function closeRouteModal() { document.getElementById('routeModal').setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+function closeRouteModal() {
+    var m = document.getElementById('routeModal');
+    if (m) m.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
 
 function openFeeModal(data) {
-    const m = document.getElementById('feeModal');
-    m.setAttribute('aria-hidden','false');
+    var m = document.getElementById('feeModal');
+    if (!m) return;
+    
+    m.setAttribute('aria-hidden', 'false');
     if (data) {
         document.getElementById('feeModalTitle').textContent = 'Sửa mức phí';
-        document.getElementById('feeId').value       = data.MaPhi;
-        document.getElementById('feeTen').value      = data.TenMucPhi || '';
-        document.getElementById('feeDi').value       = data.KhuVucDi || '';
-        document.getElementById('feeDen').value      = data.KhuVucDen || '';
-        document.getElementById('feeKlTu').value     = data.KhoiLuongTu || 0;
-        document.getElementById('feeKlDen').value    = data.KhoiLuongDen || '';
-        document.getElementById('feePhiCoBan').value = data.PhiCoBan || '';
-        document.getElementById('feePhiVuot').value  = data.PhiVuotKhoiLuong || 0;
-        document.getElementById('feeStatus').value   = data.TrangThai || 'Dang ap dung';
+        document.getElementById('feeId').value        = data.MaPhi || '';
+        document.getElementById('feeTen').value       = data.TenMucPhi || '';
+        document.getElementById('feeDi').value        = data.KhuVucDi || '';
+        document.getElementById('feeDen').value       = data.KhuVucDen || '';
+        document.getElementById('feeKlTu').value      = data.KhoiLuongTu || 0;
+        document.getElementById('feeKlDen').value     = data.KhoiLuongDen || '';
+        document.getElementById('feePhiCoBan').value  = data.PhiCoBan || '';
+        document.getElementById('feePhiVuot').value   = data.PhiVuotKhoiLuong || 0;
+        document.getElementById('feeStatus').value    = data.TrangThai || 'Dang ap dung';
     } else {
         document.getElementById('feeModalTitle').textContent = 'Thêm mức phí';
         document.getElementById('feeForm').reset();
@@ -256,7 +369,12 @@ function openFeeModal(data) {
     }
     document.body.style.overflow = 'hidden';
 }
-function closeFeeModal() { document.getElementById('feeModal').setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+function closeFeeModal() {
+    var m = document.getElementById('feeModal');
+    if (m) m.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
 </script>
 </body>
 </html>

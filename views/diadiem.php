@@ -7,6 +7,111 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    /* CSS Modal Popup */
+    .customer-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.2s ease-in-out;
+    }
+    .customer-modal[aria-hidden="false"] {
+        visibility: visible;
+        opacity: 1;
+    }
+    .customer-modal-backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(3px);
+    }
+    .customer-modal-dialog {
+        position: relative;
+        background: #ffffff;
+        width: 90%;
+        max-width: 620px;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+        overflow: hidden;
+    }
+    .customer-modal-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .customer-modal-header h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+    }
+    .customer-modal-header p {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 2px 0 0 0;
+    }
+    .modal-close {
+        background: transparent;
+        border: none;
+        font-size: 1.2rem;
+        color: #94a3b8;
+        cursor: pointer;
+    }
+    .customer-form-grid {
+        padding: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+    .customer-form-wide {
+        grid-column: span 2;
+    }
+    .input-group label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #334155;
+        margin-bottom: 4px;
+    }
+    .input-group label span {
+        color: #ef4444;
+    }
+    .input-group input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        outline: none;
+        box-sizing: border-box;
+    }
+    .input-group input:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+    .customer-modal-footer {
+        padding: 14px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    </style>
 </head>
 <body class="dashboard-body">
 <?php include 'views/menu.php'; ?>
@@ -36,9 +141,9 @@
             </div>
             <div class="header-actions">
                 <?php if ($tab === 'pickups'): ?>
-                <button class="btn btn-primary" onclick="openPickupModal()"><i class="fas fa-plus"></i> Thêm điểm nhận</button>
+                <button type="button" class="btn btn-primary" onclick="openPickupModal()"><i class="fas fa-plus"></i> Thêm điểm nhận</button>
                 <?php else: ?>
-                <button class="btn btn-primary" onclick="openDeliveryModal()"><i class="fas fa-plus"></i> Thêm điểm giao</button>
+                <button type="button" class="btn btn-primary" onclick="openDeliveryModal()"><i class="fas fa-plus"></i> Thêm điểm giao</button>
                 <?php endif; ?>
             </div>
         </div>
@@ -84,7 +189,7 @@
                                 <td class="text-center"><?php echo (int)$p['SoDonHang']; ?></td>
                                 <td><?php echo htmlspecialchars($p['GhiChu'] ?? ''); ?></td>
                                 <td class="text-center">
-                                    <button class="btn-icon text-primary" onclick="openPickupModal(<?php echo htmlspecialchars(json_encode($p), ENT_QUOTES); ?>)"><i class="fas fa-edit"></i></button>
+                                    <button type="button" class="btn-icon text-primary" onclick='openPickupModal(<?php echo json_encode($p, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)'><i class="fas fa-edit"></i></button>
                                     <a href="index.php?page=diadiem&action=delete_pickup&id=<?php echo $p['MaDiemNhan']; ?>&tab=pickups"
                                        class="btn-icon text-danger" onclick="return confirm('Xóa điểm nhận này?')"><i class="fas fa-trash-alt"></i></a>
                                 </td>
@@ -119,7 +224,7 @@
                                 <td><?php echo htmlspecialchars($d['TinhThanh'] ?? ''); ?></td>
                                 <td class="text-center"><?php echo (int)$d['SoDonHang']; ?></td>
                                 <td class="text-center">
-                                    <button class="btn-icon text-primary" onclick="openDeliveryModal(<?php echo htmlspecialchars(json_encode($d), ENT_QUOTES); ?>)"><i class="fas fa-edit"></i></button>
+                                    <button type="button" class="btn-icon text-primary" onclick='openDeliveryModal(<?php echo json_encode($d, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>)'><i class="fas fa-edit"></i></button>
                                     <a href="index.php?page=diadiem&action=delete_delivery&id=<?php echo $d['MaDiemGiao']; ?>&tab=deliveries"
                                        class="btn-icon text-danger" onclick="return confirm('Xóa điểm giao này?')"><i class="fas fa-trash-alt"></i></a>
                                 </td>
@@ -139,14 +244,20 @@
     <div class="customer-modal-backdrop" onclick="closePickupModal()"></div>
     <section class="customer-modal-dialog" role="dialog">
         <div class="customer-modal-header">
-            <div><h2 id="pickupModalTitle">Thêm điểm nhận</h2><p>Thông tin địa điểm lấy hàng</p></div>
+            <div>
+                <h2 id="pickupModalTitle">Thêm điểm nhận</h2>
+                <p>Thông tin địa điểm lấy hàng</p>
+            </div>
             <button class="modal-close" type="button" onclick="closePickupModal()"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="index.php?page=diadiem" id="pickupForm">
             <input type="hidden" name="form_type" value="pickup">
             <input type="hidden" name="id" id="pickupId" value="">
             <div class="customer-form-grid">
-                <div class="input-group customer-form-wide"><label>Địa chỉ <span>*</span></label><input name="dia_chi" id="pickupDiaChi" required></div>
+                <div class="input-group customer-form-wide">
+                    <label>Địa chỉ <span>*</span></label>
+                    <input name="dia_chi" id="pickupDiaChi" required>
+                </div>
                 <div class="input-group"><label>Khu vực</label><input name="khu_vuc" id="pickupKhuVuc"></div>
                 <div class="input-group"><label>Tỉnh/Thành</label><input name="tinh_thanh" id="pickupTinhThanh"></div>
                 <div class="input-group"><label>Quận/Huyện</label><input name="quan_huyen" id="pickupQuanHuyen"></div>
@@ -167,16 +278,25 @@
     <div class="customer-modal-backdrop" onclick="closeDeliveryModal()"></div>
     <section class="customer-modal-dialog" role="dialog">
         <div class="customer-modal-header">
-            <div><h2 id="deliveryModalTitle">Thêm điểm giao</h2><p>Thông tin người nhận và địa điểm giao hàng</p></div>
+            <div>
+                <h2 id="deliveryModalTitle">Thêm điểm giao</h2>
+                <p>Thông tin người nhận và địa điểm giao hàng</p>
+            </div>
             <button class="modal-close" type="button" onclick="closeDeliveryModal()"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST" action="index.php?page=diadiem" id="deliveryForm">
             <input type="hidden" name="form_type" value="delivery">
             <input type="hidden" name="id" id="deliveryId" value="">
             <div class="customer-form-grid">
-                <div class="input-group"><label>Tên người nhận <span>*</span></label><input name="ten_nguoi_nhan" id="deliveryTen" required></div>
+                <div class="input-group">
+                    <label>Tên người nhận <span>*</span></label>
+                    <input name="ten_nguoi_nhan" id="deliveryTen" required>
+                </div>
                 <div class="input-group"><label>Số điện thoại</label><input name="sdt" id="deliverySdt" type="tel"></div>
-                <div class="input-group customer-form-wide"><label>Địa chỉ <span>*</span></label><input name="dia_chi" id="deliveryDiaChi" required></div>
+                <div class="input-group customer-form-wide">
+                    <label>Địa chỉ <span>*</span></label>
+                    <input name="dia_chi" id="deliveryDiaChi" required>
+                </div>
                 <div class="input-group"><label>Khu vực</label><input name="khu_vuc" id="deliveryKhuVuc"></div>
                 <div class="input-group"><label>Tỉnh/Thành</label><input name="tinh_thanh" id="deliveryTinhThanh"></div>
                 <div class="input-group"><label>Quận/Huyện</label><input name="quan_huyen" id="deliveryQuanHuyen"></div>
@@ -191,13 +311,15 @@
     </section>
 </div>
 
-<script src="assets/js/script.js"></script>
 <script>
 function openPickupModal(data) {
-    const m = document.getElementById('pickupModal'); m.setAttribute('aria-hidden','false');
+    var m = document.getElementById('pickupModal');
+    if (!m) return;
+    
+    m.setAttribute('aria-hidden', 'false');
     if (data) {
         document.getElementById('pickupModalTitle').textContent = 'Sửa điểm nhận';
-        document.getElementById('pickupId').value        = data.MaDiemNhan;
+        document.getElementById('pickupId').value        = data.MaDiemNhan || '';
         document.getElementById('pickupDiaChi').value    = data.DiaChi || '';
         document.getElementById('pickupKhuVuc').value    = data.KhuVuc || '';
         document.getElementById('pickupTinhThanh').value = data.TinhThanh || '';
@@ -212,13 +334,21 @@ function openPickupModal(data) {
     }
     document.body.style.overflow = 'hidden';
 }
-function closePickupModal() { document.getElementById('pickupModal').setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+function closePickupModal() {
+    var m = document.getElementById('pickupModal');
+    if (m) m.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
 
 function openDeliveryModal(data) {
-    const m = document.getElementById('deliveryModal'); m.setAttribute('aria-hidden','false');
+    var m = document.getElementById('deliveryModal');
+    if (!m) return;
+    
+    m.setAttribute('aria-hidden', 'false');
     if (data) {
         document.getElementById('deliveryModalTitle').textContent = 'Sửa điểm giao';
-        document.getElementById('deliveryId').value        = data.MaDiemGiao;
+        document.getElementById('deliveryId').value        = data.MaDiemGiao || '';
         document.getElementById('deliveryTen').value       = data.TenNguoiNhan || '';
         document.getElementById('deliverySdt').value       = data.SoDienThoai || '';
         document.getElementById('deliveryDiaChi').value    = data.DiaChi || '';
@@ -234,7 +364,12 @@ function openDeliveryModal(data) {
     }
     document.body.style.overflow = 'hidden';
 }
-function closeDeliveryModal() { document.getElementById('deliveryModal').setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+
+function closeDeliveryModal() {
+    var m = document.getElementById('deliveryModal');
+    if (m) m.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
 </script>
 </body>
 </html>

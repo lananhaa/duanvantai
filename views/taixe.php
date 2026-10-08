@@ -186,6 +186,7 @@
 <script>
 function openDriverModal(data) {
     const modal = document.getElementById('driverModal');
+    modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     if (data) {
         document.getElementById('driverModalTitle').textContent = 'Sửa tài xế';
@@ -206,11 +207,13 @@ function openDriverModal(data) {
         document.getElementById('driverId').value = '';
         document.getElementById('driverPwReq').textContent = '*';
     }
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
 }
 function closeDriverModal() {
-    document.getElementById('driverModal').setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    const modal = document.getElementById('driverModal');
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
 }
 </script>
 </body>

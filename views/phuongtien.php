@@ -181,6 +181,7 @@
 <script>
 function openVehicleModal(data) {
     const modal = document.getElementById('vehicleModal');
+    modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     if (data) {
         document.getElementById('vehicleModalTitle').textContent = 'Sửa phương tiện';
@@ -195,11 +196,13 @@ function openVehicleModal(data) {
         document.getElementById('vehicleForm').reset();
         document.getElementById('vehicleId').value = '';
     }
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
 }
 function closeVehicleModal() {
-    document.getElementById('vehicleModal').setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    const modal = document.getElementById('vehicleModal');
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
 }
 </script>
 </body>

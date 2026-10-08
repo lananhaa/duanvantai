@@ -290,7 +290,7 @@
                                 <td><?php echo htmlspecialchars($c['TenTaiXe'] ?? 'Chưa phân công'); ?></td>
                                 <td><?php echo !empty($c['ThoiGianThu']) ? date('d/m/Y H:i', strtotime($c['ThoiGianThu'])) : '<span class="text-muted">—</span>'; ?></td>
                                 <td class="text-center">
-                                    <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:12px;"
+                                    <button class="btn btn-outline" style="padding:4px 10px;font-size:12px;"
                                         onclick="openCodModal(<?php echo $c['MaCOD']; ?>, '<?php echo htmlspecialchars($c['TrangThaiCOD'], ENT_QUOTES); ?>', '<?php echo htmlspecialchars($c['GhiChu'] ?? '', ENT_QUOTES); ?>', <?php echo $c['MaDonHang']; ?>)">
                                         <i class="fas fa-edit"></i> Cập nhật
                                     </button>
@@ -339,20 +339,16 @@
 
 <script>
 function openCodModal(codId, status, note, orderId) {
-    var m = document.getElementById('codModal');
-    if (!m) return;
-    
-    m.setAttribute('aria-hidden', 'false');
-    document.getElementById('codUpdateId').value            = codId;
+    document.getElementById('codModal').setAttribute('aria-hidden','false');
+    document.getElementById('codUpdateId').value      = codId;
     document.getElementById('codModalSubtitle').textContent = 'Đơn hàng #' + orderId;
-    document.getElementById('codStatusSelect').value        = status || 'Chua thu';
-    document.getElementById('codNote').value                = note || '';
+    document.getElementById('codStatusSelect').value  = status || 'Chua thu';
+    document.getElementById('codNote').value          = note || '';
     document.body.style.overflow = 'hidden';
 }
 
 function closeCodModal() {
-    var m = document.getElementById('codModal');
-    if (m) m.setAttribute('aria-hidden', 'true');
+    document.getElementById('codModal').setAttribute('aria-hidden','true');
     document.body.style.overflow = '';
 }
 </script>

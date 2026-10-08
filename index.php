@@ -33,6 +33,10 @@ if ($page === 'dangnhap') {
         require_once 'controllers/donhang_controller.php';
         $controller = new OrderController();
         $controller->index();
+    } elseif ($page === 'taodonhang') {
+        require_once 'controllers/donhang_controller.php';
+        $controller = new OrderController();
+        $controller->create();
     } elseif ($page === 'phancong') {
         require_once 'controllers/phancong_controller.php';
         $controller = new AssignController();

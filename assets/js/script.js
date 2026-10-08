@@ -9,6 +9,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    document.querySelectorAll('.order-row[data-detail-url]').forEach(row => {
+        const openOrder = event => {
+            if (event.target.closest('a, button, form, input, select, textarea, label')) return;
+            window.location.href = row.dataset.detailUrl;
+        };
+        row.addEventListener('click', openOrder);
+        row.addEventListener('keydown', event => {
+            if (event.key === 'Enter') openOrder(event);
+        });
+    });
+
     const navLinks = document.querySelectorAll('.nav-link[href="#"]');
     navLinks.forEach(link => {
         link.addEventListener('click', function(event) {

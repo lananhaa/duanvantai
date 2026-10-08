@@ -22,7 +22,6 @@ class DriverController {
                 'license'    => trim($_POST['license'] ?? ''),
                 'area'       => trim($_POST['area'] ?? ''),
                 'address'    => trim($_POST['address'] ?? ''),
-                'vehicle_id' => (int)($_POST['vehicle_id'] ?? 0) ?: null,
                 'status'     => trim($_POST['status'] ?? 'San sang'),
             ];
             $id = (int)($_POST['id'] ?? 0);
@@ -49,7 +48,6 @@ class DriverController {
         $keyword  = trim($_GET['keyword'] ?? '');
         $status   = trim($_GET['status'] ?? '');
         $drivers  = $model->getAll($keyword, $status);
-        $vehicles = $model->getVehicleOptions();
 
         require_once 'views/taixe.php';
     }

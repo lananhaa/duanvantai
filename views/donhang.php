@@ -1,5 +1,5 @@
 <?php
-$statuses = ['Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen', 'Da giao hang', 'Hoan tat', 'Da huy', 'Hoan hang'];
+$statuses = ['Cho xac nhan', 'Da xac nhan', 'Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen', 'Da giao hang', 'Hoan tat', 'Da huy', 'Hoan hang'];
 $statusClasses = [
     'Da huy' => 'status-huy',
     'Hoan tat' => 'status-hoan-thanh',
@@ -56,7 +56,7 @@ $editDetail = $editOrder['detail'] ?? [];
                 <tbody>
                 <?php if (empty($orders)): ?><tr><td colspan="8" class="text-center">Không tìm thấy đơn hàng.</td></tr>
                 <?php else: foreach ($orders as $row): $rowStatus = $row['TrangThaiDonHang']; $statusClass = $statusClasses[$rowStatus] ?? 'status-cho-xu-ly'; ?>
-                    <tr>
+                    <tr class="order-row" data-detail-url="index.php?page=donhang&view=<?php echo (int) $row['MaDonHang']; ?>" tabindex="0" role="link" aria-label="Xem chi tiết đơn hàng #<?php echo (int) $row['MaDonHang']; ?>">
                         <td class="font-medium">#<?php echo $row['MaDonHang']; ?></td>
                         <td><?php echo date('d/m/Y H:i', strtotime($row['NgayTao'])); ?></td>
                         <td><?php echo htmlspecialchars($row['TenKhachHang'] ?? 'N/A'); ?></td>
@@ -66,7 +66,7 @@ $editDetail = $editOrder['detail'] ?? [];
                         <td><span class="status-badge <?php echo $statusClass; ?>"><?php echo htmlspecialchars($rowStatus); ?></span></td>
                         <td class="text-center order-actions">
                             <a class="btn-icon text-primary" title="Xem chi tiết" href="index.php?page=donhang&view=<?php echo $row['MaDonHang']; ?>"><i class="fas fa-eye"></i></a>
-                            <a class="btn-icon text-warning" title="Sửa đơn hàng" href="index.php?page=donhang&edit=<?php echo $row['MaDonHang']; ?>"><i class="fas fa-edit"></i></a>
+                            <a class="btn-icon text-warning" title="Sửa đơn hàng" href="index.php?page=taodonhang&edit=<?php echo $row['MaDonHang']; ?>"><i class="fas fa-edit"></i></a>
                             <?php if (in_array($rowStatus, ['Cho xac nhan', 'Da xac nhan', 'Cho phan cong'], true)): ?><a class="btn-icon text-danger" title="Hủy đơn hàng" href="index.php?page=donhang&action=cancel&id=<?php echo $row['MaDonHang']; ?>" onclick="const reason = prompt('Nhập lý do hủy đơn:'); if (!reason) return false; this.href += '&reason=' + encodeURIComponent(reason); return confirm('Xác nhận hủy đơn hàng này?');"><i class="fas fa-ban"></i></a><?php endif; ?>
                             <?php if (($role ?? 0) !== 1): ?><a class="btn-icon text-danger" title="Xóa đơn hàng" href="index.php?page=donhang&action=delete&id=<?php echo $row['MaDonHang']; ?>" onclick="return confirm('Xóa đơn hàng này? Dữ liệu chi tiết liên quan cũng sẽ bị xóa.');"><i class="fas fa-trash"></i></a><?php endif; ?>
                         </td>

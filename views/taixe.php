@@ -95,7 +95,7 @@
                                 <td class="font-medium"><?php echo htmlspecialchars($d['HoTen']); ?></td>
                                 <td><?php echo htmlspecialchars($d['SoDienThoai'] ?? ''); ?></td>
                                 <td><?php echo htmlspecialchars($d['SoBangLai'] ?? ''); ?></td>
-                                <td><?php echo $d['BienSo'] ? htmlspecialchars($d['BienSo'] . ' (' . $d['LoaiPhuongTien'] . ')') : '<span class="text-muted">Chưa gán</span>'; ?></td>
+                                <td><?php echo $d['PhuongTienDanhSach'] ? htmlspecialchars($d['PhuongTienDanhSach']) : '<span class="text-muted">Chưa gán</span>'; ?></td>
                                 <td><?php echo htmlspecialchars($d['KhuVucHienTai'] ?? ''); ?></td>
                                 <td class="text-center">
                                     <span class="badge-pill <?php echo $d['SoDonDangNhan'] > 0 ? 'status-orange' : 'status-green'; ?>">
@@ -157,14 +157,6 @@
                 <div class="input-group"><label for="driverPhone">Số điện thoại</label><input id="driverPhone" name="phone" type="tel"></div>
                 <div class="input-group"><label for="driverLicense">Số bằng lái</label><input id="driverLicense" name="license"></div>
                 <div class="input-group"><label for="driverArea">Khu vực hiện tại</label><input id="driverArea" name="area"></div>
-                <div class="input-group"><label for="driverVehicle">Phương tiện</label>
-                    <select id="driverVehicle" name="vehicle_id">
-                        <option value="">-- Chưa gán --</option>
-                        <?php foreach ($vehicles as $v): ?>
-                        <option value="<?php echo $v['MaPhuongTien']; ?>"><?php echo htmlspecialchars($v['BienSo'] . ' - ' . $v['LoaiPhuongTien'] . ' (' . $v['TaiTrong'] . 'kg)'); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
                 <div class="input-group"><label for="driverStatus">Trạng thái</label>
                     <select id="driverStatus" name="status">
                         <option value="San sang">Sẵn sàng</option>
@@ -198,7 +190,6 @@ function openDriverModal(data) {
         document.getElementById('driverLicense').value   = data.SoBangLai || '';
         document.getElementById('driverArea').value      = data.KhuVucHienTai || '';
         document.getElementById('driverAddress').value   = data.DiaChi || '';
-        document.getElementById('driverVehicle').value   = data.MaPhuongTien || '';
         document.getElementById('driverStatus').value    = data.TrangThai || 'San sang';
         document.getElementById('driverPwReq').textContent = '';
     } else {

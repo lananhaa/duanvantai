@@ -1,12 +1,34 @@
 <?php
-$statuses = ['Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen', 'Da giao hang', 'Hoan tat', 'Da huy', 'Hoan hang'];
+$statuses = ['Cho xac nhan', 'Da xac nhan', 'Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen', 'Da giao hang', 'Hoan tat', 'Da huy', 'Hoan hang'];
+$formOrder = $editOrder ?? [];
+$submittedOrder = $submittedOrder ?? [];
+$isEditing = !empty($formOrder['MaDonHang']);
+$formValue = static function ($name, $field = null, $default = '') use ($submittedOrder, $formOrder) {
+    return $submittedOrder[$name] ?? ($field !== null ? ($formOrder[$field] ?? $default) : $default);
+};
+if (isset($submittedOrder['products']) && is_array($submittedOrder['products'])) {
+    $details = [];
+    foreach ($submittedOrder['products'] as $product) {
+        $details[] = [
+            'TenHangHoa' => $product['name'] ?? '',
+            'KhoiLuongDonVi' => $product['product_weight'] ?? 0,
+            'DonGia' => $product['unit_price'] ?? 0,
+            'SoLuong' => $product['quantity'] ?? 1,
+        ];
+    }
+} else {
+    $details = $formOrder['detail'] ?? [[]];
+}
+if (!$details) {
+    $details = [[]];
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tạo đơn hàng mới - LogisTech</title>
+    <title><?php echo $isEditing ? 'Sửa đơn hàng' : 'Tạo đơn hàng mới'; ?> - LogisTech</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -41,8 +63,8 @@ $statuses = ['Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen',
             <div class="page-title-wrap">
                 <a href="index.php?page=donhang" class="btn-back"><i class="fas fa-arrow-left"></i></a>
                 <div>
-                    <h1 class="page-title">Tạo đơn hàng mới</h1>
-                    <p class="page-subtitle">Điền thông tin chi tiết để tạo đơn vận chuyển mới</p>
+                    <h1 class="page-title"><?php echo $isEditing ? 'Sửa đơn hàng #' . (int) $formOrder['MaDonHang'] : 'Tạo đơn hàng mới'; ?></h1>
+                    <p class="page-subtitle"><?php echo $isEditing ? 'Cập nhật thông tin đơn vận chuyển' : 'Điền thông tin chi tiết để tạo đơn vận chuyển mới'; ?></p>
                 </div>
             </div>
             
@@ -53,27 +75,28 @@ $statuses = ['Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen',
             <?php endif; ?>
 
             <form method="POST" action="index.php?page=donhang" id="orderForm">
+                <input type="hidden" name="id" value="<?php echo htmlspecialchars((string) ($formOrder['MaDonHang'] ?? '')); ?>">
                 <div class="spx-form-container">
                     <div class="spx-section">
                         <div class="spx-section-header">1. Địa chỉ người gửi</div>
                         <div class="spx-section-body">
-                            <div class="spx-input-group"><label><span>*</span>Điện thoại</label><input type="text" name="pickup_phone" required></div>
-                            <div class="spx-input-group" style="grid-column: 1 / -1;"><label><span>*</span>Địa chỉ chi tiết</label><input type="text" name="pickup_address" required></div>
-                            <div class="spx-input-group"><label><span>*</span>Tỉnh / Thành phố</label><select name="pickup_province" id="pickup_province" required><option value="">-- Chọn Tỉnh / Thành phố --</option></select></div>
-                            <div class="spx-input-group"><label><span>*</span>Quận / Huyện</label><select name="pickup_district" id="pickup_district" required><option value="">-- Chọn Quận / Huyện --</option></select></div>
-                            <div class="spx-input-group"><label>Phường / Xã</label><select name="pickup_ward" id="pickup_ward"><option value="">-- Chọn Phường / Xã --</option></select></div>
+                            <div class="spx-input-group"><label><span>*</span>Điện thoại</label><input type="text" name="pickup_phone" value="<?php echo htmlspecialchars((string) $formValue('pickup_phone', 'SDTGoi')); ?>" required></div>
+                            <div class="spx-input-group" style="grid-column: 1 / -1;"><label><span>*</span>Địa chỉ chi tiết</label><input type="text" name="pickup_address" value="<?php echo htmlspecialchars((string) $formValue('pickup_address', 'DiaChiNhan')); ?>" required></div>
+                            <div class="spx-input-group"><label><span>*</span>Tỉnh / Thành phố</label><select name="pickup_province" id="pickup_province" data-selected="<?php echo htmlspecialchars((string) $formValue('pickup_province', 'TinhThanhNhan')); ?>" required><option value="">-- Chọn Tỉnh / Thành phố --</option></select></div>
+                            <div class="spx-input-group"><label><span>*</span>Quận / Huyện</label><select name="pickup_district" id="pickup_district" data-selected="<?php echo htmlspecialchars((string) $formValue('pickup_district', 'QuanHuyenNhan')); ?>" required><option value="">-- Chọn Quận / Huyện --</option></select></div>
+                            <div class="spx-input-group"><label>Phường / Xã</label><select name="pickup_ward" id="pickup_ward" data-selected="<?php echo htmlspecialchars((string) $formValue('pickup_ward', 'PhuongXaNhan')); ?>"><option value="">-- Chọn Phường / Xã --</option></select></div>
                         </div>
                     </div>
                     
                     <div class="spx-section">
                         <div class="spx-section-header">2. Địa chỉ người nhận</div>
                         <div class="spx-section-body">
-                            <div class="spx-input-group"><label><span>*</span>Điện thoại</label><input type="text" name="delivery_phone" required></div>
-                            <div class="spx-input-group"><label><span>*</span>Tên người nhận</label><input type="text" name="delivery_name" required></div>
-                            <div class="spx-input-group" style="grid-column: 1 / -1;"><label><span>*</span>Địa chỉ chi tiết</label><input type="text" name="delivery_address" required></div>
-                            <div class="spx-input-group"><label><span>*</span>Tỉnh / Thành phố</label><select name="delivery_province" id="delivery_province" required><option value="">-- Chọn Tỉnh / Thành phố --</option></select></div>
-                            <div class="spx-input-group"><label><span>*</span>Quận / Huyện</label><select name="delivery_district" id="delivery_district" required><option value="">-- Chọn Quận / Huyện --</option></select></div>
-                            <div class="spx-input-group"><label>Phường / Xã</label><select name="delivery_ward" id="delivery_ward"><option value="">-- Chọn Phường / Xã --</option></select></div>
+                            <div class="spx-input-group"><label><span>*</span>Điện thoại</label><input type="text" name="delivery_phone" value="<?php echo htmlspecialchars((string) $formValue('delivery_phone', 'SDTNhan')); ?>" required></div>
+                            <div class="spx-input-group"><label><span>*</span>Tên người nhận</label><input type="text" name="delivery_name" value="<?php echo htmlspecialchars((string) $formValue('delivery_name', 'TenNguoiNhan')); ?>" required></div>
+                            <div class="spx-input-group" style="grid-column: 1 / -1;"><label><span>*</span>Địa chỉ chi tiết</label><input type="text" name="delivery_address" value="<?php echo htmlspecialchars((string) $formValue('delivery_address', 'DiaChiGiao')); ?>" required></div>
+                            <div class="spx-input-group"><label><span>*</span>Tỉnh / Thành phố</label><select name="delivery_province" id="delivery_province" data-selected="<?php echo htmlspecialchars((string) $formValue('delivery_province', 'TinhThanhGiao')); ?>" required><option value="">-- Chọn Tỉnh / Thành phố --</option></select></div>
+                            <div class="spx-input-group"><label><span>*</span>Quận / Huyện</label><select name="delivery_district" id="delivery_district" data-selected="<?php echo htmlspecialchars((string) $formValue('delivery_district', 'QuanHuyenGiao')); ?>" required><option value="">-- Chọn Quận / Huyện --</option></select></div>
+                            <div class="spx-input-group"><label>Phường / Xã</label><select name="delivery_ward" id="delivery_ward" data-selected="<?php echo htmlspecialchars((string) $formValue('delivery_ward', 'PhuongXaGiao')); ?>"><option value="">-- Chọn Phường / Xã --</option></select></div>
                         </div>
                     </div>
 
@@ -81,14 +104,14 @@ $statuses = ['Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen',
                         <div class="spx-section" style="margin: 0;">
                             <div class="spx-section-header">3. Loại dịch vụ</div>
                             <div class="spx-section-body full">
-                                <div class="spx-input-group"><label><span>*</span>Tuyến giao</label><select name="route_id" id="routeSelect" required><option value="">-- Chọn tuyến giao --</option><?php foreach ($options['tuyengiao'] as $item): ?><option value="<?php echo $item['MaTuyenGiao']; ?>"><?php echo htmlspecialchars($item['TenTuyen']); ?></option><?php endforeach; ?></select></div>
+                                <div class="spx-input-group"><label><span>*</span>Tuyến giao</label><select name="route_id" id="routeSelect" required><option value="">-- Chọn tuyến giao --</option><?php foreach ($options['tuyengiao'] as $item): ?><option value="<?php echo $item['MaTuyenGiao']; ?>" <?php echo ((string) $formValue('route_id', 'MaTuyenGiao') === (string) $item['MaTuyenGiao']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($item['TenTuyen']); ?></option><?php endforeach; ?></select></div>
                                 <div id="routeMessage" style="font-size: 13px; margin-top: -5px;"></div>
                             </div>
                         </div>
                         <div class="spx-section" style="margin: 0;">
                             <div class="spx-section-header">4. Thông tin chung</div>
                             <div class="spx-section-body full">
-                                <div class="spx-input-group"><label><span>*</span>Khách hàng</label><select name="customer_id" required><?php foreach ($options['khachhang'] as $item): ?><option value="<?php echo $item['MaKhachHang']; ?>"><?php echo htmlspecialchars($item['HoTen']); ?></option><?php endforeach; ?></select></div>
+                                <div class="spx-input-group"><label><span>*</span>Khách hàng</label><select name="customer_id" required><?php foreach ($options['khachhang'] as $item): ?><option value="<?php echo $item['MaKhachHang']; ?>" <?php echo ((string) $formValue('customer_id', 'MaKhachHang') === (string) $item['MaKhachHang']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($item['HoTen']); ?></option><?php endforeach; ?></select></div>
                             </div>
                         </div>
                     </div>
@@ -96,12 +119,15 @@ $statuses = ['Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen',
                     <div class="spx-section">
                         <div class="spx-section-header">5. Thông tin bưu gửi</div>
                         <div class="spx-section-body" id="productList">
+                            <?php foreach ($details as $index => $detail): ?>
                             <div class="product-item" style="grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; border: 1px dashed #ddd; padding: 15px; position: relative; background: #fafafa; border-radius: 6px;">
-                                <div class="spx-input-group" style="grid-column: 1 / -1;"><label><span>*</span>Tên sản phẩm</label><input type="text" name="products[0][name]" required></div>
-                                <div class="spx-input-group"><label><span>*</span>Khối lượng (kg/đv)</label><input type="number" step="0.1" min="0" name="products[0][product_weight]" value="0" required class="calc-trigger weight-input"></div>
-                                <div class="spx-input-group"><label><span>*</span>Giá trị bưu gửi</label><input type="number" name="products[0][unit_price]" min="0" step="1000" value="0" required></div>
-                                <div class="spx-input-group"><label><span>*</span>Số lượng</label><input type="number" name="products[0][quantity]" min="1" value="1" required class="calc-trigger qty-input"></div>
+                                <div class="spx-input-group" style="grid-column: 1 / -1;"><label><span>*</span>Tên sản phẩm</label><input type="text" name="products[<?php echo $index; ?>][name]" value="<?php echo htmlspecialchars((string) ($detail['TenHangHoa'] ?? '')); ?>" required></div>
+                                <div class="spx-input-group"><label><span>*</span>Khối lượng (kg/đv)</label><input type="number" step="0.1" min="0" name="products[<?php echo $index; ?>][product_weight]" value="<?php echo htmlspecialchars((string) ($detail['KhoiLuongDonVi'] ?? 0)); ?>" required class="calc-trigger weight-input"></div>
+                                <div class="spx-input-group"><label><span>*</span>Giá trị bưu gửi</label><input type="number" name="products[<?php echo $index; ?>][unit_price]" min="0" step="1000" value="<?php echo htmlspecialchars((string) ($detail['DonGia'] ?? 0)); ?>" required></div>
+                                <div class="spx-input-group"><label><span>*</span>Số lượng</label><input type="number" name="products[<?php echo $index; ?>][quantity]" min="1" value="<?php echo htmlspecialchars((string) ($detail['SoLuong'] ?? 1)); ?>" required class="calc-trigger qty-input"></div>
+                                <?php if ($index > 0): ?><button type="button" class="btn-remove-prod" style="position: absolute; top: 10px; right: 10px; background: #ee4d2d; color: white; border: none; padding: 3px 8px; cursor: pointer; border-radius: 4px; font-size: 12px;">Xóa</button><?php endif; ?>
                             </div>
+                            <?php endforeach; ?>
                         </div>
                         <div style="padding: 0 20px 20px;"><button type="button" class="btn btn-outline" id="btnAddProduct" style="width: 100%; border-style: dashed; color: #ee4d2d; border-color: #ee4d2d; background: transparent; padding: 10px;"><i class="fas fa-plus"></i> Thêm sản phẩm</button></div>
                     </div>
@@ -109,14 +135,18 @@ $statuses = ['Cho phan cong', 'Da phan cong', 'Da nhan hang', 'Dang van chuyen',
                     <div class="spx-section">
                         <div class="spx-section-header">6. Dịch vụ & Khác</div>
                         <div class="spx-section-body">
-                            <div class="spx-input-group"><label>Phí hoàn (Nếu có)</label><input type="number" name="return_fee" min="0" step="1000" value="0"></div>
+                            <div class="spx-input-group"><label>Phí hoàn (Nếu có)</label><input type="number" name="return_fee" min="0" step="1000" value="<?php echo htmlspecialchars((string) $formValue('return_fee', 'PhiHoan', 0)); ?>"></div>
+                            <?php if ($isEditing): ?>
+                            <div class="spx-input-group"><label>Trạng thái</label><select name="status"><?php foreach ($statuses as $status): ?><option value="<?php echo htmlspecialchars($status); ?>" <?php echo ((string) $formValue('status', 'TrangThai') === $status) ? 'selected' : ''; ?>><?php echo htmlspecialchars($status); ?></option><?php endforeach; ?></select></div>
+                            <div class="spx-input-group"><label>Lý do hủy</label><input name="cancel_reason" value="<?php echo htmlspecialchars((string) $formValue('cancel_reason', 'LyDoHuy')); ?>"></div>
+                            <?php endif; ?>
                             <div class="spx-input-group" style="grid-column: 1 / -1;"><div id="calcFeeDisplay" style="color: #ee4d2d; font-weight: 600; background: #fff4f4; padding: 15px; border: 1px dashed #ee4d2d; text-align: center; border-radius: 6px; font-size: 16px;">Phí vận chuyển tạm tính: Đang tính toán...</div></div>
                         </div>
                     </div>
 
                     <div style="display: flex; justify-content: flex-end; gap: 15px; margin-top: 10px;">
                         <a class="btn btn-outline" href="index.php?page=donhang" style="padding: 12px 24px;">Hủy</a>
-                        <button class="btn btn-primary btn-submit-spx" type="submit"><i class="fas fa-save"></i> Lưu đơn hàng</button>
+                        <button class="btn btn-primary btn-submit-spx" type="submit"><i class="fas fa-save"></i> <?php echo $isEditing ? 'Cập nhật đơn hàng' : 'Lưu đơn hàng'; ?></button>
                     </div>
                 </div>
             </form>

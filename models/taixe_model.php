@@ -13,17 +13,33 @@ class DriverModel {
         $query = "SELECT tx.MaTaiXe, tx.HoTen, tx.SoDienThoai, tx.SoBangLai, tx.KhuVucHienTai,
                          tx.ThoiGianCapNhatViTri, tx.TrangThai, tx.DiaChi, tx.NgayTao,
                          t.TenDangNhap,
-                         pt.BienSo, pt.LoaiPhuongTien, pt.TaiTrong, pt.TrangThai AS TrangThaiXe,
+                         (SELECT GROUP_CONCAT(CONCAT(pt.BienSo, ' (',
+                                  CASE pt.TrangThai
+                                      WHEN 'San sang' THEN 'Sẵn sàng'
+                                      WHEN 'Du phong' THEN 'Dự phòng'
+                                      WHEN 'Dang chay' THEN 'Đang chạy'
+                                      WHEN 'Bao tri' THEN 'Bảo trì'
+                                      ELSE pt.TrangThai
+                                  END, ')') ORDER BY pt.TrangThai = 'San sang' DESC, pt.BienSo SEPARATOR ', ')
+                          FROM PhuongTien pt WHERE pt.MaTaiXe = tx.MaTaiXe) AS PhuongTienDanhSach,
+                         (SELECT pt.BienSo FROM PhuongTien pt
+                          WHERE pt.MaTaiXe = tx.MaTaiXe AND pt.TrangThai = 'San sang' LIMIT 1) AS BienSo,
+                         (SELECT pt.LoaiPhuongTien FROM PhuongTien pt
+                          WHERE pt.MaTaiXe = tx.MaTaiXe AND pt.TrangThai = 'San sang' LIMIT 1) AS LoaiPhuongTien,
+                         (SELECT pt.TaiTrong FROM PhuongTien pt
+                          WHERE pt.MaTaiXe = tx.MaTaiXe AND pt.TrangThai = 'San sang' LIMIT 1) AS TaiTrong,
+                         (SELECT pt.MaPhuongTien FROM PhuongTien pt
+                          WHERE pt.MaTaiXe = tx.MaTaiXe AND pt.TrangThai = 'San sang' LIMIT 1) AS MaPhuongTien,
                          (SELECT COUNT(*) FROM PhanCong pc WHERE pc.MaTaiXe = tx.MaTaiXe
                           AND pc.TrangThai NOT IN ('Hoan thanh','Da huy','Hoan hang','Hoan tat')) AS SoDonDangNhan
                   FROM TaiXe tx
                   INNER JOIN TaiKhoan t ON tx.MaTaiKhoan = t.MaTaiKhoan
-                  LEFT JOIN PhuongTien pt ON tx.MaPhuongTien = pt.MaPhuongTien
                   WHERE 1=1";
         $params = [];
         if ($keyword !== '') {
             $query .= " AND (tx.HoTen LIKE :kw OR tx.SoDienThoai LIKE :kw OR tx.SoBangLai LIKE :kw
-                         OR tx.KhuVucHienTai LIKE :kw OR tx.DiaChi LIKE :kw OR t.TenDangNhap LIKE :kw OR pt.BienSo LIKE :kw)";
+                         OR tx.KhuVucHienTai LIKE :kw OR tx.DiaChi LIKE :kw OR t.TenDangNhap LIKE :kw
+                         OR EXISTS (SELECT 1 FROM PhuongTien pt WHERE pt.MaTaiXe = tx.MaTaiXe AND pt.BienSo LIKE :kw))";
             $params[':kw'] = '%' . $keyword . '%';
         }
         if ($status !== '') {
@@ -38,19 +54,15 @@ class DriverModel {
 
     public function getById($id) {
         $stmt = $this->conn->prepare(
-            "SELECT tx.*, t.TenDangNhap, pt.BienSo, pt.LoaiPhuongTien, pt.TaiTrong
+            "SELECT tx.*, t.TenDangNhap,
+                    (SELECT GROUP_CONCAT(CONCAT(pt.BienSo, ' (', pt.TrangThai, ')') ORDER BY pt.TrangThai = 'San sang' DESC, pt.BienSo SEPARATOR ', ')
+                     FROM PhuongTien pt WHERE pt.MaTaiXe = tx.MaTaiXe) AS PhuongTienDanhSach
              FROM TaiXe tx
              INNER JOIN TaiKhoan t ON tx.MaTaiKhoan = t.MaTaiKhoan
-             LEFT JOIN PhuongTien pt ON tx.MaPhuongTien = pt.MaPhuongTien
              WHERE tx.MaTaiXe = :id"
         );
         $stmt->execute([':id' => (int)$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    public function getVehicleOptions() {
-        return $this->conn->query("SELECT MaPhuongTien, BienSo, LoaiPhuongTien, TaiTrong FROM PhuongTien WHERE TrangThai != 'Bao tri' ORDER BY BienSo")
-            ->fetchAll(PDO::FETCH_ASSOC);
     }
 
     private function usernameExists($username, $accountId = null) {
@@ -74,12 +86,11 @@ class DriverModel {
             $accountId = $this->conn->lastInsertId();
 
             $tx = $this->conn->prepare(
-                "INSERT INTO TaiXe (MaTaiKhoan, MaPhuongTien, HoTen, SoDienThoai, SoBangLai, KhuVucHienTai, DiaChi, TrangThai)
-                 VALUES (:acc, :pt, :name, :phone, :bang, :kvuc, :addr, 'San sang')"
+                "INSERT INTO TaiXe (MaTaiKhoan, HoTen, SoDienThoai, SoBangLai, KhuVucHienTai, DiaChi, TrangThai)
+                 VALUES (:acc, :name, :phone, :bang, :kvuc, :addr, 'San sang')"
             );
             $tx->execute([
                 ':acc'   => $accountId,
-                ':pt'    => $data['vehicle_id'] ?: null,
                 ':name'  => $data['name'],
                 ':phone' => $data['phone'],
                 ':bang'  => $data['license'],
@@ -114,10 +125,9 @@ class DriverModel {
             $this->conn->prepare($accSql)->execute($accData);
 
             $this->conn->prepare(
-                "UPDATE TaiXe SET MaPhuongTien = :pt, HoTen = :name, SoDienThoai = :phone, SoBangLai = :bang,
+                "UPDATE TaiXe SET HoTen = :name, SoDienThoai = :phone, SoBangLai = :bang,
                  KhuVucHienTai = :kvuc, DiaChi = :addr, TrangThai = :status WHERE MaTaiXe = :id"
             )->execute([
-                ':pt'     => $data['vehicle_id'] ?: null,
                 ':name'   => $data['name'],
                 ':phone'  => $data['phone'],
                 ':bang'   => $data['license'],

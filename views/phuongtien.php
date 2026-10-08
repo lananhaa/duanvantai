@@ -31,12 +31,12 @@
     <div class="content-area">
         <div class="page-header">
             <div>
-                <h1 class="page-title">Quản lý phương tiện</h1>
-                <p class="page-subtitle">Danh sách xe và tình trạng phương tiện</p>
+                <h1 class="page-title"><?php echo (int) ($_SESSION['role_id'] ?? 0) === 3 ? 'Phương tiện của tôi' : 'Quản lý phương tiện'; ?></h1>
+                <p class="page-subtitle"><?php echo (int) ($_SESSION['role_id'] ?? 0) === 3 ? 'Hiển thị tất cả phương tiện được gán cho tài khoản tài xế của bạn' : 'Danh sách phương tiện, tài xế phụ trách và tình trạng xe'; ?></p>
             </div>
             <div class="header-actions">
                 <div style="display:flex;gap:6px;">
-                    <?php foreach (['' => 'Tất cả', 'San sang' => 'Sẵn sàng', 'Dang chay' => 'Đang chạy', 'Bao tri' => 'Bảo trì'] as $val => $label): ?>
+                    <?php foreach (['' => 'Tất cả', 'San sang' => 'Sẵn sàng', 'Du phong' => 'Dự phòng', 'Dang chay' => 'Đang chạy', 'Bao tri' => 'Bảo trì'] as $val => $label): ?>
                     <a href="index.php?page=phuongtien&status=<?php echo urlencode($val); ?>&keyword=<?php echo urlencode($_GET['keyword'] ?? ''); ?>"
                        class="btn <?php echo ($_GET['status'] ?? '') === $val ? 'btn-primary' : 'btn-outline'; ?>" style="padding:6px 14px;font-size:13px;">
                         <?php echo $label; ?>
@@ -57,12 +57,14 @@
         <?php
         $vTotal = count($vehicles);
         $vReady = count(array_filter($vehicles, fn($v) => $v['TrangThai'] === 'San sang'));
+        $vReserve = count(array_filter($vehicles, fn($v) => $v['TrangThai'] === 'Du phong'));
         $vRun   = count(array_filter($vehicles, fn($v) => $v['TrangThai'] === 'Dang chay'));
         $vMaint = count(array_filter($vehicles, fn($v) => $v['TrangThai'] === 'Bao tri'));
         ?>
-        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+        <div class="stats-grid" style="grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:20px;">
             <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#4361ee,#3a0ca3)"><i class="fas fa-truck"></i></div><div class="stat-info"><p class="stat-label">Tổng phương tiện</p><h3 class="stat-value"><?php echo $vTotal; ?></h3></div></div>
             <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#06d6a0,#0aa372)"><i class="fas fa-check-circle"></i></div><div class="stat-info"><p class="stat-label">Sẵn sàng</p><h3 class="stat-value"><?php echo $vReady; ?></h3></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9)"><i class="fas fa-warehouse"></i></div><div class="stat-info"><p class="stat-label">Dự phòng</p><h3 class="stat-value"><?php echo $vReserve; ?></h3></div></div>
             <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#f77f00,#d62828)"><i class="fas fa-road"></i></div><div class="stat-info"><p class="stat-label">Đang chạy</p><h3 class="stat-value"><?php echo $vRun; ?></h3></div></div>
             <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ff6b6b,#ee5a24)"><i class="fas fa-wrench"></i></div><div class="stat-info"><p class="stat-label">Bảo trì</p><h3 class="stat-value"><?php echo $vMaint; ?></h3></div></div>
         </div>
@@ -77,7 +79,7 @@
                                 <th>Biển số</th>
                                 <th>Loại phương tiện</th>
                                 <th>Tải trọng (kg)</th>
-                                <th>Tài xế đang dùng</th>
+                                <th>Tài xế phụ trách</th>
                                 <th>Trạng thái</th>
                                 <th>Mô tả</th>
                                 <th class="text-center">Thao tác</th>
@@ -94,20 +96,20 @@
                                 <td><?php echo htmlspecialchars($v['LoaiPhuongTien'] ?? ''); ?></td>
                                 <td><?php echo number_format($v['TaiTrong'], 0, ',', '.'); ?></td>
                                 <td class="text-center">
-                                    <span class="badge-pill <?php echo $v['SoTaiXe'] > 0 ? 'status-blue' : 'status-gray'; ?>">
-                                        <?php echo (int)$v['SoTaiXe']; ?> tài xế
-                                    </span>
+                                    <?php echo $v['TenTaiXe'] ? htmlspecialchars($v['TenTaiXe']) : '<span class="text-muted">Chưa gán</span>'; ?>
                                 </td>
                                 <td>
                                     <?php
                                     $cls = match($v['TrangThai']) {
                                         'San sang'  => 'status-green',
+                                        'Du phong'  => 'status-gray',
                                         'Dang chay' => 'status-blue',
                                         'Bao tri'   => 'status-red',
                                         default     => 'status-gray',
                                     };
                                     $lbl = match($v['TrangThai']) {
                                         'San sang'  => 'Sẵn sàng',
+                                        'Du phong'  => 'Dự phòng',
                                         'Dang chay' => 'Đang chạy',
                                         'Bao tri'   => 'Bảo trì',
                                         default     => $v['TrangThai'],
@@ -160,9 +162,20 @@
                     </select>
                 </div>
                 <div class="input-group"><label for="vehicleTaiTrong">Tải trọng (kg)</label><input id="vehicleTaiTrong" name="tai_trong" type="number" min="0" step="0.01" value="0"></div>
+                <?php if ((int)($_SESSION['role_id'] ?? 0) === 4): ?>
+                <div class="input-group"><label for="vehicleDriver">Tài xế phụ trách</label>
+                    <select id="vehicleDriver" name="driver_id">
+                        <option value="">-- Chưa gán tài xế --</option>
+                        <?php foreach ($drivers as $driver): ?>
+                        <option value="<?php echo (int)$driver['MaTaiXe']; ?>"><?php echo htmlspecialchars($driver['HoTen']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
                 <div class="input-group"><label for="vehicleStatus">Trạng thái</label>
                     <select id="vehicleStatus" name="status">
                         <option value="San sang">Sẵn sàng</option>
+                        <option value="Du phong">Dự phòng</option>
                         <option value="Dang chay">Đang chạy</option>
                         <option value="Bao tri">Bảo trì</option>
                     </select>
@@ -191,10 +204,13 @@ function openVehicleModal(data) {
         document.getElementById('vehicleTaiTrong').value= data.TaiTrong || 0;
         document.getElementById('vehicleStatus').value  = data.TrangThai || 'San sang';
         document.getElementById('vehicleMoTa').value    = data.MoTa || '';
+        const driverSelect = document.getElementById('vehicleDriver');
+        if (driverSelect) driverSelect.value = data.MaTaiXe || '';
     } else {
         document.getElementById('vehicleModalTitle').textContent = 'Thêm phương tiện';
         document.getElementById('vehicleForm').reset();
         document.getElementById('vehicleId').value = '';
+        document.getElementById('vehicleStatus').value = '<?php echo htmlspecialchars($defaultVehicleStatus, ENT_QUOTES); ?>';
     }
     document.body.classList.add('modal-open');
 }

@@ -9,6 +9,11 @@ class OrderController {
             exit;
         }
 
+        if (isset($_GET['edit'])) {
+            header('Location: index.php?page=taodonhang&edit=' . (int) $_GET['edit']);
+            exit;
+        }
+
         $orderModel = new OrderModel();
         $customerId = $role === 1 ? $orderModel->getCustomerIdByAccount($_SESSION['user_id'] ?? 0) : null;
         $message = '';
@@ -37,7 +42,18 @@ class OrderController {
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $isApprovalRequest = $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'approve';
+        if ($isApprovalRequest) {
+            $id = (int) ($_POST['order_id'] ?? 0);
+            if (!in_array($role, [2, 4], true)) {
+                $message = 'Bạn không có quyền duyệt đơn hàng.';
+                $messageType = 'error';
+            } else {
+                $result = $orderModel->approveForAssign($id, $_SESSION['user_id'] ?? 0);
+                $message = $result['message'];
+                $messageType = $result['success'] ? 'success' : 'error';
+            }
+        } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
                 'customer_id' => $_POST['customer_id'] ?? 0,
                 'route_id' => $_POST['route_id'] ?? 0,
@@ -124,23 +140,50 @@ class OrderController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $messageType === 'success') {
-            header('Location: index.php?page=donhang');
+            $redirect = $isApprovalRequest
+                ? 'index.php?page=donhang&view=' . (int) ($_POST['order_id'] ?? 0)
+                : 'index.php?page=donhang';
+            header('Location: ' . $redirect);
             exit;
+        }
+
+        $detailId = isset($_GET['view'])
+            ? (int) $_GET['view']
+            : ($isApprovalRequest ? (int) ($_POST['order_id'] ?? 0) : 0);
+        if ($detailId > 0) {
+            $orderDetail = $orderModel->getById($detailId);
+            if (!$orderDetail || ($customerId !== null && (int) $orderDetail['MaKhachHang'] !== (int) $customerId)) {
+                http_response_code(404);
+                echo 'Không tìm thấy đơn hàng hoặc bạn không có quyền xem.';
+                return;
+            }
+            $orderHistory = $orderModel->getHistory($detailId);
+            require_once 'views/chitietdonhang.php';
+            return;
         }
 
         $keyword = trim($_GET['keyword'] ?? '');
         $status = trim($_GET['status'] ?? '');
         $orders = $orderModel->getAll($keyword, $status, $customerId)->fetchAll(PDO::FETCH_ASSOC);
         $options = $orderModel->getFormOptions($customerId);
-        $editOrder = isset($_GET['edit']) ? $orderModel->getById($_GET['edit']) : null;
-        $viewOrder = isset($_GET['view']) ? $orderModel->getById($_GET['view']) : null;
+        $editOrder = $_SERVER['REQUEST_METHOD'] === 'POST' && (int) ($_POST['id'] ?? 0) > 0
+            ? $orderModel->getById((int) $_POST['id'])
+            : null;
+        $viewOrder = null;
         if ($customerId !== null) {
             if ($editOrder && (int) $editOrder['MaKhachHang'] !== (int) $customerId) {
                 $editOrder = null;
             }
-            if ($viewOrder && (int) $viewOrder['MaKhachHang'] !== (int) $customerId) {
-                $viewOrder = null;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $messageType === 'error') {
+            if ((int) ($_POST['id'] ?? 0) > 0 && !$editOrder) {
+                require_once 'views/donhang.php';
+                return;
             }
+            $submittedOrder = $_POST;
+            require_once 'views/taodonhang.php';
+            return;
         }
 
         require_once 'views/donhang.php';
@@ -155,6 +198,17 @@ class OrderController {
 
         $orderModel = new OrderModel();
         $customerId = $role === 1 ? $orderModel->getCustomerIdByAccount($_SESSION['user_id'] ?? 0) : null;
+        $editOrder = null;
+        $message = '';
+        $messageType = 'error';
+        if (isset($_GET['edit'])) {
+            $editOrder = $orderModel->getById((int) $_GET['edit']);
+            if (!$editOrder || ($customerId !== null && (int) $editOrder['MaKhachHang'] !== (int) $customerId)) {
+                http_response_code(404);
+                echo 'Không tìm thấy đơn hàng hoặc bạn không có quyền thao tác.';
+                return;
+            }
+        }
         $options = $orderModel->getFormOptions($customerId);
 
         require_once 'views/taodonhang.php';

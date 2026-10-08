@@ -47,14 +47,14 @@ class AssignModel {
 
     // ─── Lấy danh sách tài xế kèm phương tiện
     public function getDrivers($keyword = '', $status = '') {
-        $query = "SELECT tx.MaTaiXe, tx.MaPhuongTien, tx.HoTen, tx.SoDienThoai, tx.KhuVucHienTai,
+        $query = "SELECT tx.MaTaiXe, pt.MaPhuongTien, tx.HoTen, tx.SoDienThoai, tx.KhuVucHienTai,
                          tx.TrangThai, tk.TrangThai AS TrangThaiTaiKhoan,
                          pt.BienSo, pt.LoaiPhuongTien, pt.TaiTrong, pt.TrangThai AS TrangThaiXe,
                          (SELECT COUNT(*) FROM PhanCong WHERE MaTaiXe = tx.MaTaiXe
                           AND TrangThai NOT IN ('Hoan thanh', 'Da huy', 'Hoan hang', 'Hoan tat')) AS SoDonDangGiao
                   FROM TaiXe tx
                   INNER JOIN TaiKhoan tk ON tk.MaTaiKhoan = tx.MaTaiKhoan
-                  LEFT JOIN PhuongTien pt ON tx.MaPhuongTien = pt.MaPhuongTien
+                  LEFT JOIN PhuongTien pt ON pt.MaTaiXe = tx.MaTaiXe AND pt.TrangThai = 'San sang'
                   WHERE 1=1";
         $params = [];
         if (!empty($keyword)) {
@@ -94,11 +94,11 @@ class AssignModel {
             }
 
             $driverStatement = $this->conn->prepare("SELECT tx.MaTaiXe, tx.TrangThai,
-                    tx.MaPhuongTien, tk.TrangThai AS TrangThaiTaiKhoan,
+                    pt.MaPhuongTien, tk.TrangThai AS TrangThaiTaiKhoan,
                     pt.TaiTrong, pt.TrangThai AS TrangThaiPhuongTien
                 FROM TaiXe tx
                 INNER JOIN TaiKhoan tk ON tk.MaTaiKhoan = tx.MaTaiKhoan
-                LEFT JOIN PhuongTien pt ON pt.MaPhuongTien = tx.MaPhuongTien
+                LEFT JOIN PhuongTien pt ON pt.MaTaiXe = tx.MaTaiXe AND pt.TrangThai = 'San sang'
                 WHERE tx.MaTaiXe = :id FOR UPDATE");
             $driverStatement->execute([':id' => (int)$maTaiXe]);
             $driver = $driverStatement->fetch(PDO::FETCH_ASSOC);
@@ -106,9 +106,9 @@ class AssignModel {
                 $this->conn->rollBack();
                 return ['success' => false, 'message' => 'Tài xế không tồn tại, chưa sẵn sàng hoặc tài khoản đã khóa.'];
             }
-            if (!$driver['MaPhuongTien'] || $driver['TrangThaiPhuongTien'] === 'Bao tri') {
+            if (!$driver['MaPhuongTien']) {
                 $this->conn->rollBack();
-                return ['success' => false, 'message' => 'Tài xế chưa có phương tiện hợp lệ hoặc phương tiện đang bảo trì.'];
+                return ['success' => false, 'message' => 'Tài xế chưa có phương tiện chính ở trạng thái sẵn sàng.'];
             }
             if ((float)$driver['TaiTrong'] < (float)$order['TongKhoiLuong']) {
                 $this->conn->rollBack();

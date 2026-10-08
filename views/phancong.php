@@ -262,12 +262,11 @@
                                     $isBusy    = $d['TrangThai'] === 'Dang giao';
                                     $isOffline = $d['TrangThai'] === 'Nghi'
                                         || $d['TrangThaiTaiKhoan'] !== 'Hoat dong'
-                                        || !$d['MaPhuongTien']
-                                        || $d['TrangThaiXe'] === 'Bao tri';
+                                        || !$d['MaPhuongTien'];
                                     $cardClass = $isBusy ? 'busy' : ($isOffline ? 'offline' : '');
                                     $badgeClass= $isBusy ? 'badge-busy' : ($isOffline ? 'badge-offline' : 'badge-available');
                                     $badgeText = $isBusy ? 'Đang giao' : ($isOffline
-                                        ? ($d['TrangThai'] === 'Nghi' ? 'Nghỉ' : (!$d['MaPhuongTien'] ? 'Chưa có xe' : ($d['TrangThaiXe'] === 'Bao tri' ? 'Xe bảo trì' : 'Tài khoản khóa')))
+                                        ? ($d['TrangThai'] === 'Nghi' ? 'Nghỉ' : (!$d['MaPhuongTien'] ? 'Chưa có xe sẵn sàng' : 'Tài khoản khóa'))
                                         : 'Sẵn sàng');
                                 ?>
                                 <div class="driver-card <?php echo $cardClass; ?>"
@@ -290,7 +289,7 @@
                                             · Tải <?php echo number_format($d['TaiTrong'] ?? 0, 0); ?>kg
                                         </span>
                                         <?php else: ?>
-                                        <span style="color:#f59e0b"><i class="fas fa-exclamation-triangle"></i> Chưa gán phương tiện</span>
+                                        <span style="color:#f59e0b"><i class="fas fa-exclamation-triangle"></i> Chưa có phương tiện chính sẵn sàng</span>
                                         <?php endif; ?>
                                         <span><i class="fas fa-boxes"></i> Đang nhận: <strong><?php echo (int)$d['SoDonDangGiao']; ?> đơn</strong></span>
                                     </div>

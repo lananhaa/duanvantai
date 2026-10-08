@@ -45,17 +45,33 @@ class OrderModel {
 
     public function getById($id) {
         $query = "SELECT d.*, k.HoTen AS TenKhachHang, dg.TenNguoiNhan,
+                         k.SoDienThoai AS SDTKhachHang, k.Email AS EmailKhachHang,
+                         k.DiaChi AS DiaChiKhachHang, tk.TenDangNhap AS TaiKhoanKhachHang,
                          dg.SoDienThoai AS SDTNhan, dn.DiaChi AS DiaChiNhan,
                          dg.DiaChi AS DiaChiGiao, dg.TinhThanh AS TinhThanhGiao, dg.QuanHuyen AS QuanHuyenGiao, dg.PhuongXa AS PhuongXaGiao,
+                         dg.KhuVuc AS KhuVucGiao, dg.GhiChu AS GhiChuGiao,
                          dn.SoDienThoai AS SDTGoi, dn.TinhThanh AS TinhThanhNhan, dn.QuanHuyen AS QuanHuyenNhan, dn.PhuongXa AS PhuongXaNhan,
-                         tn.TenTuyen, tx.HoTen AS TenTaiXe
+                         dn.KhuVuc AS KhuVucNhan, dn.GhiChu AS GhiChuNhan,
+                         tn.TenTuyen, tn.KhuVucDi, tn.KhuVucDen, tn.MoTa AS MoTaTuyen,
+                         phi.TenMucPhi, phi.KhoiLuongTu, phi.KhoiLuongDen, phi.PhiCoBan, phi.PhiVuotKhoiLuong,
+                         cod.SoTienCOD, cod.TrangThai AS TrangThaiCOD, cod.ThoiGianThu AS ThoiGianThuCOD, cod.GhiChu AS GhiChuCOD,
+                         pc.MaPhanCong, pc.ThoiGianPhanCong, pc.TrangThai AS TrangThaiPhanCong, pc.GhiChu AS GhiChuPhanCong,
+                         nv.HoTen AS TenNhanVienPhanCong, tx.MaTaiXe, tx.HoTen AS TenTaiXe, tx.SoDienThoai AS SDTTaiXe,
+                         pt.BienSo, pt.LoaiPhuongTien, tkTx.TenDangNhap AS TaiKhoanTaiXe
                   FROM {$this->table_name} d
                   LEFT JOIN KhachHang k ON d.MaKhachHang = k.MaKhachHang
+                  LEFT JOIN TaiKhoan tk ON k.MaTaiKhoan = tk.MaTaiKhoan
                   LEFT JOIN DiemGiao dg ON d.MaDiemGiao = dg.MaDiemGiao
                   LEFT JOIN DiemNhan dn ON d.MaDiemNhan = dn.MaDiemNhan
                   LEFT JOIN TuyenGiao tn ON d.MaTuyenGiao = tn.MaTuyenGiao
-                  LEFT JOIN PhanCong pc ON pc.MaDonHang = d.MaDonHang AND pc.TrangThai NOT IN ('Da huy')
+                  LEFT JOIN PhiVanChuyen phi ON d.MaPhi = phi.MaPhi
+                  LEFT JOIN COD cod ON cod.MaDonHang = d.MaDonHang
+                  LEFT JOIN PhanCong pc ON pc.MaDonHang = d.MaDonHang
+                    AND pc.MaPhanCong = (SELECT MAX(pc2.MaPhanCong) FROM PhanCong pc2 WHERE pc2.MaDonHang = d.MaDonHang)
+                  LEFT JOIN NhanVien nv ON pc.MaNhanVien = nv.MaNhanVien
                   LEFT JOIN TaiXe tx ON tx.MaTaiXe = pc.MaTaiXe
+                  LEFT JOIN PhuongTien pt ON pt.MaTaiXe = tx.MaTaiXe AND pt.TrangThai = 'San sang'
+                  LEFT JOIN TaiKhoan tkTx ON tx.MaTaiKhoan = tkTx.MaTaiKhoan
                   WHERE d.MaDonHang = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->execute([':id' => (int) $id]);
@@ -63,10 +79,12 @@ class OrderModel {
         if (!$order) {
             return null;
         }
-        $detail = $this->conn->prepare("SELECT c.*, h.TenHangHoa, h.KhoiLuong AS KhoiLuongDonVi
+        $detail = $this->conn->prepare("SELECT c.*, h.TenHangHoa, h.KhoiLuong AS KhoiLuongDonVi,
+                                               h.LoaiHang, h.DonViTinh, h.MoTa AS MoTaHangHoa
                                         FROM ChiTietDonHang c
                                         INNER JOIN HangHoa h ON c.MaHangHoa = h.MaHangHoa
-                                        WHERE c.MaDonHang = :id");
+                                        WHERE c.MaDonHang = :id
+                                        ORDER BY c.MaChiTiet ASC");
         $detail->execute([':id' => (int) $id]);
         $order['detail'] = $detail->fetchAll(PDO::FETCH_ASSOC) ?: [];
         return $order;
@@ -422,6 +440,30 @@ class OrderModel {
 
     public function queueForAssign($id, $accountId) {
         return $this->advanceStatus($id, 'Da xac nhan', 'Cho phan cong', $accountId, 'Đơn sẵn sàng phân công tài xế.');
+    }
+
+    public function approveForAssign($id, $accountId) {
+        try {
+            $this->conn->beginTransaction();
+            $stmt = $this->conn->prepare("SELECT TrangThai FROM DonHang WHERE MaDonHang = :id FOR UPDATE");
+            $stmt->execute([':id' => (int) $id]);
+            $status = $stmt->fetchColumn();
+            if (!$status || !in_array($status, ['Cho xac nhan', 'Da xac nhan'], true)) {
+                $this->conn->rollBack();
+                return ['success' => false, 'message' => 'Chỉ duyệt đơn đang chờ xác nhận hoặc đã xác nhận.'];
+            }
+
+            $this->conn->prepare("UPDATE DonHang SET TrangThai = 'Cho phan cong' WHERE MaDonHang = :id")
+                ->execute([':id' => (int) $id]);
+            $this->insertHistory((int) $id, 'Cho phan cong', $accountId, 'Đơn hàng đã được duyệt và chuyển sang chờ phân công.');
+            $this->conn->commit();
+            return ['success' => true, 'message' => 'Đã duyệt đơn và chuyển sang chờ phân công.'];
+        } catch (Exception $exception) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            return ['success' => false, 'message' => 'Không thể duyệt đơn hàng.'];
+        }
     }
 
     public function retryFailedDelivery($id, $accountId) {

@@ -731,9 +731,11 @@ body.modal-open { overflow: hidden; }
 .order-search-form input[type="text"] { width: 100%; border: 0; outline: 0; background: transparent; padding-left: 36px; }
 .order-actions { white-space: nowrap; }
 .order-actions .btn-icon { display: inline-flex; padding: 7px 9px; }
+.order-row { cursor: pointer; }
+.order-row:hover td { background: #f5f8ff; }
 .order-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; padding: 24px; font-size: 14px; }
 .order-detail-grid strong { color: var(--text-muted); font-weight: 500; }
-.driver-page { max-width: 1440px; }
+.driver-page { width: 100%; max-width: none; }
 .driver-location-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 20px; margin-bottom: 22px; background: #fff; border: 1px solid var(--border-color); border-left: 4px solid #2a9d8f; border-radius: 8px; }
 .driver-location-bar > div { display: flex; flex-direction: column; gap: 2px; }
 .driver-section-label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; }

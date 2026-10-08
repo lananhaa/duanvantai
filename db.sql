@@ -84,11 +84,13 @@ CREATE TABLE NhanVien (
 
 CREATE TABLE PhuongTien (
     MaPhuongTien INT AUTO_INCREMENT PRIMARY KEY,
+    MaTaiXe INT NULL,
     BienSo VARCHAR(20) NOT NULL UNIQUE,
     LoaiPhuongTien VARCHAR(50),
     TaiTrong DECIMAL(10,2),
     TrangThai VARCHAR(30) DEFAULT 'San sang',
-    MoTa VARCHAR(255)
+    MoTa VARCHAR(255),
+    INDEX IX_PhuongTien_MaTaiXe (MaTaiXe)
 ) ENGINE=InnoDB;
 
 
@@ -99,7 +101,6 @@ CREATE TABLE PhuongTien (
 CREATE TABLE TaiXe (
     MaTaiXe INT AUTO_INCREMENT PRIMARY KEY,
     MaTaiKhoan INT NOT NULL UNIQUE,
-    MaPhuongTien INT,
     HoTen VARCHAR(100) NOT NULL,
     SoDienThoai VARCHAR(20),
     SoBangLai VARCHAR(50),
@@ -111,12 +112,13 @@ CREATE TABLE TaiXe (
 
     CONSTRAINT FK_TaiXe_TaiKhoan
         FOREIGN KEY (MaTaiKhoan)
-        REFERENCES TaiKhoan(MaTaiKhoan),
-
-    CONSTRAINT FK_TaiXe_PhuongTien
-        FOREIGN KEY (MaPhuongTien)
-        REFERENCES PhuongTien(MaPhuongTien)
+        REFERENCES TaiKhoan(MaTaiKhoan)
 ) ENGINE=InnoDB;
+
+ALTER TABLE PhuongTien
+    ADD CONSTRAINT FK_PhuongTien_TaiXe
+    FOREIGN KEY (MaTaiXe) REFERENCES TaiXe(MaTaiXe)
+    ON DELETE SET NULL;
 
 
 -- =========================================================
@@ -412,19 +414,22 @@ VALUES
 -- =========================================================
 
 INSERT INTO TaiXe
-(MaTaiXe, MaTaiKhoan, MaPhuongTien, HoTen, SoDienThoai,
+(MaTaiXe, MaTaiKhoan, HoTen, SoDienThoai,
  SoBangLai, KhuVucHienTai, ThoiGianCapNhatViTri,
  TrangThai, DiaChi, NgayTao)
 VALUES
-(1, 3, 1, 'Tran Van Nam', '0912345678',
+(1, 3, 'Tran Van Nam', '0912345678',
  'B2-123456', 'Thanh Xuan',
  '2026-09-20 08:00:00',
  'San sang', 'Ha Noi', '2026-09-01 08:20:00'),
 
-(2, 4, 2, 'Le Van Minh', '0923456789',
+(2, 4, 'Le Van Minh', '0923456789',
  'C1-234567', 'Cau Giay',
  '2026-09-20 08:15:00',
  'San sang', 'Ha Noi', '2026-09-01 08:30:00');
+
+UPDATE PhuongTien SET MaTaiXe = 1 WHERE MaPhuongTien = 1;
+UPDATE PhuongTien SET MaTaiXe = 2 WHERE MaPhuongTien = 2;
 
 
 -- =========================================================
@@ -635,7 +640,7 @@ VALUES
 -- 14. DỮ LIỆU PHÂN CÔNG
 -- LƯU Ý:
 -- Không có MaPhuongTien.
--- Phương tiện lấy từ TaiXe.MaPhuongTien.
+-- Phương tiện chính sẵn sàng lấy từ PhuongTien.MaTaiXe.
 -- =========================================================
 
 INSERT INTO PhanCong
@@ -788,3 +793,35 @@ VALUES
  'Khong thu',
  NULL,
  'Nguoi nhan tu choi nhan hang');
+ -- Run once on an existing database created before the multi-vehicle update.
+-- Review the preflight query first; a legacy vehicle shared by multiple drivers
+-- cannot be represented as owned by all of them in the new one-driver-per-vehicle model.
+
+SELECT MaPhuongTien, COUNT(*) AS SoTaiXe
+FROM TaiXe
+WHERE MaPhuongTien IS NOT NULL
+GROUP BY MaPhuongTien
+HAVING COUNT(*) > 1;
+
+ALTER TABLE PhuongTien
+    ADD COLUMN MaTaiXe INT NULL AFTER MaPhuongTien;
+
+UPDATE PhuongTien pt
+INNER JOIN (
+    SELECT MaPhuongTien, MIN(MaTaiXe) AS MaTaiXe
+    FROM TaiXe
+    WHERE MaPhuongTien IS NOT NULL
+    GROUP BY MaPhuongTien
+    HAVING COUNT(*) = 1
+) legacy_owner ON legacy_owner.MaPhuongTien = pt.MaPhuongTien
+SET pt.MaTaiXe = legacy_owner.MaTaiXe;
+
+ALTER TABLE PhuongTien
+    ADD INDEX IX_PhuongTien_MaTaiXe (MaTaiXe),
+    ADD CONSTRAINT FK_PhuongTien_TaiXe
+        FOREIGN KEY (MaTaiXe) REFERENCES TaiXe(MaTaiXe)
+        ON DELETE SET NULL;
+
+ALTER TABLE TaiXe
+    DROP FOREIGN KEY FK_TaiXe_PhuongTien,
+    DROP COLUMN MaPhuongTien;

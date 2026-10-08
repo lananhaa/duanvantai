@@ -65,12 +65,14 @@
                         <span class="nav-text">Quản lý tài xế</span>
                     </a>
                 </li>
+                <?php if (in_array($sidebarRole, [3, 4], true)): ?>
                 <li class="nav-item">
                     <a href="index.php?page=phuongtien" class="nav-link <?php echo $activePage === 'phuongtien' ? 'active' : ''; ?>">
                         <i class="fas fa-truck"></i>
                         <span class="nav-text">Quản lý phương tiện</span>
                     </a>
                 </li>
+                <?php endif; ?>
                 <li class="nav-item">
                     <a href="index.php?page=phancong" class="nav-link <?php echo $activePage === 'phancong' ? 'active' : ''; ?>">
                         <i class="fas fa-user-check"></i>
